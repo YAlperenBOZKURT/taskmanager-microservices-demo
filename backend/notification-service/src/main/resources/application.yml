@@ -1,0 +1,62 @@
+# Notification Service config
+# Yusuf Alperen Bozkurt
+
+server:
+  port: 8083
+
+spring:
+  application:
+    name: notification-service
+
+  # MongoDB
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://notification_user:notification_secret_2026@localhost:27017/notification_db?authSource=admin}
+
+  # Kafka
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  # Mail
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# Notification settings
+notification:
+  email:
+    enabled: ${NOTIFICATION_EMAIL_ENABLED:false}
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.taskmanager.notification: DEBUG
