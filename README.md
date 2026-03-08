@@ -26,8 +26,12 @@ Küçük bir firma için tamamen kendilerine özel tasarlanmış bir görev yön
 **🇬🇧 EN**
 I documented the problems I encountered during Docker setup and their solutions in [`DOCKER_USAGE.md`](./DOCKER_USAGE.md). If you want to adapt this project for your own use and build on top of it, feel free to do so. If you have any questions, don't hesitate to reach out to me.
 
+> ⚠️ **Important:** You must manually create the `.env` file in the project root directory. You can simply copy and paste the contents of [`.env.example`](./.env.example) to quickly set up a test environment.
+
 **🇹🇷 TR**
 Docker kurulumu sırasında karşılaştığım sorunları ve çözümlerini [`DOCKER_USAGE.md`](./DOCKER_USAGE.md) dosyasında paylaştım. Projeyi kendinize uyarlayıp geliştirmek isterseniz tamamen özgürsünüz. Herhangi bir sorunuz olursa bana ulaşmaktan çekinmeyin.
+
+> ⚠️ **Önemli:** Proje kök dizininde `.env` dosyasını manuel olarak oluşturmanız gerekmektedir. Hızlıca test ortamı kurmak için [`.env.example`](./.env.example) dosyasının içeriğini kopyalayıp yapıştırabilirsiniz.
 
 ---
 
