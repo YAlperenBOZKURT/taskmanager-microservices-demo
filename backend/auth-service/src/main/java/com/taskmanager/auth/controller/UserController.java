@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -78,10 +79,33 @@ public class UserController {
         UserDto updated = userService.updateUserProfile(
                 currentUser.getId(),
                 body.get("fullName"),
-                body.get("email"),
-                null // team can only be changed by admins
+                body.get("email")
         );
         return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/team-members")
+    public ResponseEntity<Page<UserDto>> getTeamMembers(
+            @RequestParam String team,
+            Pageable pageable) {
+        log.info("GET /api/users/team-members?team={}", team);
+        Page<UserDto> users = userService.getUsersByTeam(team, pageable);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/teams")
+    public ResponseEntity<List<String>> getMyTeams(Authentication authentication) {
+        log.info("GET /api/users/teams - user: {}", authentication.getName());
+        UserDto currentUser = userService.getCurrentUser(authentication.getName());
+        return ResponseEntity.ok(currentUser.getTeams() != null
+                ? currentUser.getTeams().stream().sorted().toList()
+                : List.of());
+    }
+
+    @GetMapping("/all-teams")
+    public ResponseEntity<List<String>> getAllTeams() {
+        log.info("GET /api/users/all-teams");
+        return ResponseEntity.ok(userService.getAllTeams());
     }
 
     private Map<String, Object> mapApprovalRequest(ApprovalRequest req) {

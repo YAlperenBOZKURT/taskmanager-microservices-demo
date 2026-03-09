@@ -16,9 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 public class GatewayHeaderAuthFilter extends OncePerRequestFilter {
@@ -28,14 +26,13 @@ public class GatewayHeaderAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // these headers are set by the api gateway after JWT validation
         String userId = request.getHeader("X-User-Id");
         String username = request.getHeader("X-Username");
         String roles = request.getHeader("X-User-Roles");
+        String teams = request.getHeader("X-User-Teams");
 
         if (userId != null && username != null) {
             List<SimpleGrantedAuthority> authorities = Collections.emptyList();
-            // roles come as comma-separated string like "ROLE_ADMIN,ROLE_USER"
             if (roles != null && !roles.isBlank()) {
                 authorities = Arrays.stream(roles.split(","))
                         .map(String::trim)
@@ -43,12 +40,23 @@ public class GatewayHeaderAuthFilter extends OncePerRequestFilter {
                         .toList();
             }
 
-            // store userId in credentials so controllers can easily grab it
+            Map<String, Object> details = new HashMap<>();
+            details.put("userId", userId);
+            if (teams != null && !teams.isBlank()) {
+                details.put("teams", Arrays.stream(teams.split(","))
+                        .map(String::trim)
+                        .filter(t -> !t.isEmpty())
+                        .collect(java.util.stream.Collectors.toSet()));
+            } else {
+                details.put("teams", Collections.emptySet());
+            }
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(username, userId, authorities);
+            authentication.setDetails(details);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("Gateway auth set - user: {}, userId: {}, roles: {}", username, userId, roles);
+            log.debug("Gateway auth set - user: {}, userId: {}, roles: {}, teams: {}", username, userId, roles, teams);
         }
 
         filterChain.doFilter(request, response);

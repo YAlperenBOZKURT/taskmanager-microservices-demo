@@ -1,10 +1,17 @@
 // TaskManager Frontend - Axios API client setup with interceptors
 // Author: Yusuf Alperen Bozkurt
 
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
+import toast from 'react-hot-toast';
 
-// fallback to localhost if env variable is not set
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    _silent?: boolean;
+    _retry?: boolean;
+  }
+}
 
 const api = axios.create({
   baseURL: API_URL,
@@ -13,9 +20,7 @@ const api = axios.create({
   },
 });
 
-// attach the JWT token to every outgoing request
 api.interceptors.request.use((config) => {
-  // grab the token from local storage
   const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -23,36 +28,86 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// handle 401 errors - try to refresh the token before giving up
+const ERROR_MESSAGES: Record<number, string> = {
+  400: 'Geçersiz istek',
+  403: 'Bu işlem için yetkiniz yok',
+  404: 'İstenen kaynak bulunamadı',
+  409: 'Çakışma - kayıt zaten mevcut',
+  422: 'Doğrulama hatası',
+  429: 'Çok fazla istek, lütfen bekleyin',
+  500: 'Sunucu hatası, lütfen tekrar deneyin',
+  502: 'Servis şu an erişilemez',
+  503: 'Servis bakımda',
+};
+
+let lastToastTime = 0;
+const TOAST_THROTTLE_MS = 3000;
+
+const isAuthRequest = (url?: string) =>
+  url?.includes('/api/auth/login') || url?.includes('/api/auth/register') || url?.includes('/api/auth/refresh');
+
+const isSilentRequest = (config?: InternalAxiosRequestConfig) =>
+  config?._silent === true;
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as InternalAxiosRequestConfig | undefined;
+    const status = error.response?.status;
+    const requestUrl = originalRequest?.url || '';
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (isAuthRequest(requestUrl)) {
+      return Promise.reject(error);
+    }
+
+    if (status === 401 && !originalRequest?._retry) {
+      if (originalRequest) originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          // try refreshing the token
           const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
           const { accessToken, refreshToken: newRefreshToken } = res.data;
 
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
 
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return api(originalRequest);
+          if (originalRequest) {
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            return api(originalRequest);
+          }
         } catch {
-          // refresh failed, clear everything and redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
           window.location.href = '/login';
         }
       } else {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+
+    if (isSilentRequest(originalRequest)) {
+      return Promise.reject(error);
+    }
+
+    if (status && status !== 401) {
+      const now = Date.now();
+      if (now - lastToastTime > TOAST_THROTTLE_MS) {
+        lastToastTime = now;
+        const serverMsg = error.response?.data?.message || error.response?.data?.error;
+        const msg = serverMsg || ERROR_MESSAGES[status] || `Hata (${status})`;
+        toast.error(msg);
+      }
+    } else if (!error.response) {
+      const now = Date.now();
+      if (now - lastToastTime > TOAST_THROTTLE_MS) {
+        lastToastTime = now;
+        toast.error('Sunucuya bağlanılamıyor');
       }
     }
 

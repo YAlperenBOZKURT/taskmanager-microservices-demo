@@ -31,6 +31,9 @@ public class Task {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "team")
+    private String team;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -44,12 +47,6 @@ public class Task {
     @Column(name = "creator_id", nullable = false)
     private UUID creatorId;
 
-    @Column(name = "approver_id")
-    private UUID approverId;
-
-    @Column(name = "team_leader_id")
-    private UUID teamLeaderId;
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "task_assignees", joinColumns = @JoinColumn(name = "task_id"))
     @Column(name = "assignee_id")
@@ -62,6 +59,11 @@ public class Task {
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Attachment> attachments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
+    @Builder.Default
+    private List<TaskProgressEntry> progressEntries = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

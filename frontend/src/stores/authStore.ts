@@ -29,8 +29,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (username: string, password: string) => {
     set({ isLoading: true });
     try {
-      const res = await authService.login(username, password);
-      // save tokens and user info to local storage for persistence
+      const res = await authService.login(username.trim(), password);
       localStorage.setItem('accessToken', res.accessToken);
       localStorage.setItem('refreshToken', res.refreshToken);
       localStorage.setItem('user', JSON.stringify(res.user));
@@ -43,7 +42,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     try {
       await authService.logout();
+    } catch {
+      // ignore logout API errors
     } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
       set({ user: null, isAuthenticated: false });
     }
   },

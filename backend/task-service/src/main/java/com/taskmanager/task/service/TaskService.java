@@ -13,6 +13,7 @@ import com.taskmanager.task.entity.*;
 import com.taskmanager.task.exception.TaskException;
 import com.taskmanager.task.repository.AttachmentRepository;
 import com.taskmanager.task.repository.TaskApprovalRequestRepository;
+import com.taskmanager.task.repository.TaskProgressEntryRepository;
 import com.taskmanager.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -33,75 +35,121 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final AttachmentRepository attachmentRepository;
     private final TaskApprovalRequestRepository approvalRequestRepository;
+    private final TaskProgressEntryRepository progressEntryRepository;
     private final MinioService minioService;
     private final TaskKafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-    // ==================== ADMIN: Direct Operations ====================
+    // ==================== ADMIN/SUPER_ADMIN: Direct Operations ====================
 
-    // admins can create tasks directly without needing approval
     @Transactional
     public TaskDto createTaskDirect(CreateTaskRequest request, UUID userId, String username) {
+        validateDueDate(request.getDueDate());
+
         Task task = Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .team(request.getTeam())
                 .priority(request.getPriority() != null ? request.getPriority() : TaskPriority.MEDIUM)
-                .status(TaskStatus.APPROVED)
+                .status(TaskStatus.ACTIVE)
                 .creatorId(userId)
-                .approverId(userId)
-                .teamLeaderId(request.getTeamLeaderId())
                 .assigneeIds(request.getAssigneeIds() != null ? request.getAssigneeIds() : new HashSet<>())
                 .dueDate(request.getDueDate())
                 .build();
 
         task = taskRepository.save(task);
-        log.info("Task created directly by admin {}: taskId={}", username, task.getId());
+        log.info("Task created directly by {}: taskId={}, team={}", username, task.getId(), task.getTeam());
 
         kafkaProducer.sendTaskCreated(task);
         return TaskDto.fromEntity(task);
     }
 
     @Transactional
-    public TaskDto updateTaskDirect(UUID taskId, UpdateTaskRequest request, UUID userId, String username) {
+    public TaskDto updateTaskDirect(UUID taskId, UpdateTaskRequest request, UUID userId, String username,
+                                     Set<String> userTeams, boolean isSuperAdmin) {
         Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
+        if (request.getDueDate() != null) {
+            validateDueDate(request.getDueDate());
+        }
         applyUpdates(task, request);
         task = taskRepository.save(task);
 
-        log.info("Task updated directly by admin {}: taskId={}", username, taskId);
+        log.info("Task updated directly by {}: taskId={}", username, taskId);
         kafkaProducer.sendTaskUpdated(task);
         return TaskDto.fromEntity(task);
     }
 
     @Transactional
-    public void deleteTaskDirect(UUID taskId, UUID userId, String username) {
+    public void deleteTaskDirect(UUID taskId, UUID userId, String username,
+                                  Set<String> userTeams, boolean isSuperAdmin) {
         Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
 
-        // clean up attachments from minio before deleting the task
         for (Attachment attachment : task.getAttachments()) {
             minioService.deleteFile(attachment.getFilePath());
         }
 
         taskRepository.delete(task);
-        log.info("Task deleted directly by admin {}: taskId={}", username, taskId);
+        log.info("Task deleted directly by {}: taskId={}", username, taskId);
         kafkaProducer.sendTaskDeleted(task);
     }
 
     @Transactional
-    public TaskDto assignTaskDirect(UUID taskId, AssignTaskRequest request, UUID userId, String username) {
+    public TaskDto assignTaskDirect(UUID taskId, AssignTaskRequest request, UUID userId, String username,
+                                     Set<String> userTeams, boolean isSuperAdmin) {
         Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
         task.setAssigneeIds(request.getAssigneeIds());
         task = taskRepository.save(task);
 
-        log.info("Task assigned directly by admin {}: taskId={}, assignees={}", username, taskId, request.getAssigneeIds());
+        log.info("Task assigned directly by {}: taskId={}, assignees={}", username, taskId, request.getAssigneeIds());
         kafkaProducer.sendTaskAssigned(task);
+        return TaskDto.fromEntity(task);
+    }
+
+    @Transactional
+    public TaskDto markTaskPending(UUID taskId, UUID userId, String username,
+                                    Set<String> userTeams, boolean isSuperAdmin) {
+        Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
+
+        if (task.getStatus() != TaskStatus.ACTIVE) {
+            throw new TaskException("Only ACTIVE tasks can be marked as pending", HttpStatus.BAD_REQUEST);
+        }
+
+        task.setStatus(TaskStatus.PENDING);
+        task = taskRepository.save(task);
+        log.info("Task marked as pending by {}: taskId={}", username, taskId);
+        kafkaProducer.sendTaskUpdated(task);
+        return TaskDto.fromEntity(task);
+    }
+
+    @Transactional
+    public TaskDto approveCompletion(UUID taskId, UUID userId, String username,
+                                      Set<String> userTeams, boolean isSuperAdmin) {
+        Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
+
+        if (task.getStatus() != TaskStatus.PENDING) {
+            throw new TaskException("Only PENDING tasks can be approved", HttpStatus.BAD_REQUEST);
+        }
+
+        task.setStatus(TaskStatus.COMPLETED);
+        task = taskRepository.save(task);
+        log.info("Task completion approved by {}: taskId={}", username, taskId);
+        kafkaProducer.sendTaskUpdated(task);
         return TaskDto.fromEntity(task);
     }
 
     // ==================== USER: Request-based Operations ====================
 
-    // regular users need admin approval - serialize the request and store it
     @Transactional
     public TaskApprovalRequestDto requestCreateTask(CreateTaskRequest request, UUID userId, String username) {
+        if (request.getDueDate() != null) {
+            validateDueDate(request.getDueDate());
+        }
+
         TaskApprovalRequest approvalRequest = TaskApprovalRequest.builder()
                 .requestType(RequestType.CREATE)
                 .requesterId(userId)
@@ -118,7 +166,10 @@ public class TaskService {
 
     @Transactional
     public TaskApprovalRequestDto requestUpdateTask(UUID taskId, UpdateTaskRequest request, UUID userId, String username) {
-        getTaskEntity(taskId); // verify task exists
+        getTaskEntity(taskId);
+        if (request.getDueDate() != null) {
+            validateDueDate(request.getDueDate());
+        }
 
         TaskApprovalRequest approvalRequest = TaskApprovalRequest.builder()
                 .requestType(RequestType.UPDATE)
@@ -136,51 +187,76 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskApprovalRequestDto requestDeleteTask(UUID taskId, UUID userId, String username) {
-        getTaskEntity(taskId); // verify task exists
+    public TaskApprovalRequestDto requestCompleteTask(UUID taskId, UUID userId, String username, String message) {
+        Task task = getTaskEntity(taskId);
+        if (task.getStatus() != TaskStatus.ACTIVE) {
+            throw new TaskException("Only ACTIVE tasks can have completion requests", HttpStatus.BAD_REQUEST);
+        }
+
+        Map<String, String> completionData = new HashMap<>();
+        completionData.put("taskId", taskId.toString());
+        if (message != null) {
+            completionData.put("message", message);
+        }
 
         TaskApprovalRequest approvalRequest = TaskApprovalRequest.builder()
-                .requestType(RequestType.DELETE)
+                .requestType(RequestType.COMPLETION)
                 .taskId(taskId)
                 .requesterId(userId)
                 .requesterUsername(username)
-                .requestData("{}")
+                .requestData(serializeToJson(completionData))
                 .build();
 
         approvalRequest = approvalRequestRepository.save(approvalRequest);
-        log.info("Task deletion request submitted by {} for taskId={}: requestId={}", username, taskId, approvalRequest.getId());
+        log.info("Task completion request submitted by {} for taskId={}: requestId={}", username, taskId, approvalRequest.getId());
 
         kafkaProducer.sendApprovalRequested(approvalRequest);
         return TaskApprovalRequestDto.fromEntity(approvalRequest);
     }
+
+    // ==================== Progress Entry Operations ====================
 
     @Transactional
-    public TaskApprovalRequestDto requestAssignTask(UUID taskId, AssignTaskRequest request, UUID userId, String username) {
-        getTaskEntity(taskId); // verify task exists
+    public TaskProgressEntryDto addProgressEntry(UUID taskId, String message, UUID userId, String username,
+                                                  Set<String> userTeams, boolean isSuperAdmin) {
+        Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
 
-        TaskApprovalRequest approvalRequest = TaskApprovalRequest.builder()
-                .requestType(RequestType.ASSIGN)
-                .taskId(taskId)
-                .requesterId(userId)
-                .requesterUsername(username)
-                .requestData(serializeToJson(request))
+        TaskProgressEntry entry = TaskProgressEntry.builder()
+                .task(task)
+                .message(message)
+                .createdBy(userId)
+                .createdByUsername(username)
                 .build();
 
-        approvalRequest = approvalRequestRepository.save(approvalRequest);
-        log.info("Task assign request submitted by {} for taskId={}: requestId={}", username, taskId, approvalRequest.getId());
-
-        kafkaProducer.sendApprovalRequested(approvalRequest);
-        return TaskApprovalRequestDto.fromEntity(approvalRequest);
+        entry = progressEntryRepository.save(entry);
+        log.info("Progress entry added by {} for taskId={}: entryId={}", username, taskId, entry.getId());
+        return TaskProgressEntryDto.fromEntity(entry);
     }
 
-    // ==================== Read Operations ====================
-
-    public TaskDto getTaskById(UUID taskId) {
-        return TaskDto.fromEntity(getTaskEntity(taskId));
+    public List<TaskProgressEntryDto> getProgressEntries(UUID taskId) {
+        getTaskEntity(taskId);
+        return progressEntryRepository.findByTaskIdOrderByCreatedAtAsc(taskId).stream()
+                .map(TaskProgressEntryDto::fromEntity)
+                .toList();
     }
 
-    public Page<TaskDto> getAllTasks(Pageable pageable) {
-        return taskRepository.findAll(pageable).map(TaskDto::fromEntity);
+    // ==================== Read Operations (Team-based visibility) ====================
+
+    public TaskDto getTaskById(UUID taskId, Set<String> userTeams, boolean isSuperAdmin) {
+        Task task = getTaskEntity(taskId);
+        enforceTeamAccess(task, userTeams, isSuperAdmin);
+        return TaskDto.fromEntity(task);
+    }
+
+    public Page<TaskDto> getAllTasks(Set<String> userTeams, boolean isSuperAdmin, Pageable pageable) {
+        if (isSuperAdmin) {
+            return taskRepository.findAll(pageable).map(TaskDto::fromEntity);
+        }
+        if (userTeams == null || userTeams.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return taskRepository.findByTeamIn(userTeams, pageable).map(TaskDto::fromEntity);
     }
 
     public Page<TaskDto> getTasksByCreator(UUID creatorId, Pageable pageable) {
@@ -191,12 +267,15 @@ public class TaskService {
         return taskRepository.findByAssigneeId(assigneeId, pageable).map(TaskDto::fromEntity);
     }
 
-    public Page<TaskDto> getTasksByTeamLeader(UUID teamLeaderId, Pageable pageable) {
-        return taskRepository.findByTeamLeaderId(teamLeaderId, pageable).map(TaskDto::fromEntity);
-    }
-
-    public Page<TaskDto> getTasksByStatus(TaskStatus status, Pageable pageable) {
-        return taskRepository.findByStatus(status, pageable).map(TaskDto::fromEntity);
+    public Page<TaskDto> getTasksByStatus(TaskStatus status, Set<String> userTeams,
+                                           boolean isSuperAdmin, Pageable pageable) {
+        if (isSuperAdmin) {
+            return taskRepository.findByStatus(status, pageable).map(TaskDto::fromEntity);
+        }
+        if (userTeams == null || userTeams.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return taskRepository.findByTeamInAndStatus(userTeams, status, pageable).map(TaskDto::fromEntity);
     }
 
     // ==================== Attachment Operations ====================
@@ -221,7 +300,7 @@ public class TaskService {
     }
 
     public List<AttachmentDto> getAttachments(UUID taskId) {
-        getTaskEntity(taskId); // verify task exists
+        getTaskEntity(taskId);
         return attachmentRepository.findByTaskId(taskId).stream()
                 .map(AttachmentDto::fromEntity)
                 .toList();
@@ -232,7 +311,6 @@ public class TaskService {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new TaskException("Attachment not found", HttpStatus.NOT_FOUND));
 
-        // check if user owns this attachment before deleting (admins can delete anything)
         if (!isAdmin && !attachment.getUploadedBy().equals(userId)) {
             throw new TaskException("You can only delete your own attachments", HttpStatus.FORBIDDEN);
         }
@@ -249,7 +327,6 @@ public class TaskService {
                 .orElseThrow(() -> new TaskException("Task not found with id: " + taskId, HttpStatus.NOT_FOUND));
     }
 
-    // only update fields that were actually sent in the request (partial update)
     void applyUpdates(Task task, UpdateTaskRequest request) {
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
@@ -257,14 +334,11 @@ public class TaskService {
         if (request.getDescription() != null) {
             task.setDescription(request.getDescription());
         }
-        if (request.getStatus() != null) {
-            task.setStatus(request.getStatus());
+        if (request.getTeam() != null) {
+            task.setTeam(request.getTeam());
         }
         if (request.getPriority() != null) {
             task.setPriority(request.getPriority());
-        }
-        if (request.getTeamLeaderId() != null) {
-            task.setTeamLeaderId(request.getTeamLeaderId());
         }
         if (request.getAssigneeIds() != null) {
             task.setAssigneeIds(request.getAssigneeIds());
@@ -274,8 +348,21 @@ public class TaskService {
         }
     }
 
-    // serialize the request to json so we can store it for approval
-    private String serializeToJson(Object obj) {
+    private void enforceTeamAccess(Task task, Set<String> userTeams, boolean isSuperAdmin) {
+        if (isSuperAdmin) return;
+        if (task.getTeam() == null) return;
+        if (userTeams == null || !userTeams.contains(task.getTeam())) {
+            throw new TaskException("You don't have access to this task's team", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private void validateDueDate(LocalDateTime dueDate) {
+        if (dueDate != null && dueDate.isBefore(LocalDateTime.now())) {
+            throw new TaskException("Due date must not be in the past", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    String serializeToJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {

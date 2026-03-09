@@ -9,6 +9,8 @@ import com.taskmanager.auth.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -28,7 +30,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Page<User> findByRolesContaining(Role role, Pageable pageable);
 
-    Page<User> findByTeam(String team, Pageable pageable);
+    @Query("SELECT u FROM User u JOIN u.teams t WHERE t = :team")
+    Page<User> findByTeam(@Param("team") String team, Pageable pageable);
 
-    List<User> findByTeam(String team);
+    @Query("SELECT u FROM User u JOIN u.teams t WHERE t = :team")
+    List<User> findByTeam(@Param("team") String team);
+
+    @Query("SELECT DISTINCT t FROM User u JOIN u.teams t ORDER BY t")
+    List<String> findAllDistinctTeams();
 }

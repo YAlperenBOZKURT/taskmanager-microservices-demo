@@ -1,9 +1,14 @@
 /**
- * REST API for the support ticket system - create, list, close tickets
+ * REST API for the support ticket system - create, list, approve/reject tickets.
+ * Permission matrix:
+ *   USER  → same team users/admins + any super admin
+ *   ADMIN → same team users/admins + any super admin
+ *   SUPER_ADMIN → anyone
  * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.controller;
 
+import com.taskmanager.notification.document.TicketStatus;
 import com.taskmanager.notification.dto.CreateTicketRequest;
 import com.taskmanager.notification.dto.TicketDto;
 import com.taskmanager.notification.service.TicketService;
@@ -23,13 +28,13 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    // user id and username come from the gateway headers
     @PostMapping
     public ResponseEntity<TicketDto> createTicket(
             @RequestHeader("X-User-Id") String userId,
             @RequestHeader("X-Username") String username,
+            @RequestHeader(value = "X-User-Roles", defaultValue = "") String roles,
             @Valid @RequestBody CreateTicketRequest request) {
-        TicketDto ticket = ticketService.createTicket(userId, username, request);
+        TicketDto ticket = ticketService.createTicket(userId, username, roles, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ticket);
     }
 
@@ -48,13 +53,23 @@ public class TicketController {
     }
 
     @GetMapping("/{ticketId}")
-    public ResponseEntity<TicketDto> getTicket(@PathVariable String ticketId) {
-        return ResponseEntity.ok(ticketService.getTicketById(ticketId));
+    public ResponseEntity<TicketDto> getTicket(
+            @PathVariable String ticketId,
+            @RequestHeader("X-User-Id") String userId) {
+        return ResponseEntity.ok(ticketService.getTicketById(ticketId, userId));
     }
 
-    // TODO: could add authorization check - only sender or recipient should close
-    @PatchMapping("/{ticketId}/close")
-    public ResponseEntity<TicketDto> closeTicket(@PathVariable String ticketId) {
-        return ResponseEntity.ok(ticketService.closeTicket(ticketId));
+    @PatchMapping("/{ticketId}/approve")
+    public ResponseEntity<TicketDto> approveTicket(
+            @PathVariable String ticketId,
+            @RequestHeader("X-User-Id") String userId) {
+        return ResponseEntity.ok(ticketService.updateTicketStatus(ticketId, TicketStatus.APPROVED, userId));
+    }
+
+    @PatchMapping("/{ticketId}/reject")
+    public ResponseEntity<TicketDto> rejectTicket(
+            @PathVariable String ticketId,
+            @RequestHeader("X-User-Id") String userId) {
+        return ResponseEntity.ok(ticketService.updateTicketStatus(ticketId, TicketStatus.REJECTED, userId));
     }
 }

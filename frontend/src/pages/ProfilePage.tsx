@@ -81,11 +81,11 @@ export default function ProfilePage() {
               <span className="text-xs px-3 py-1 rounded-full font-medium bg-indigo-100 text-indigo-700">
                 {getRoleLabel(highestRole)}
               </span>
-              {user.team && (
-                <span className="text-xs px-3 py-1 rounded-full font-medium bg-teal-50 text-teal-700">
-                  {user.team}
+              {user.teams && user.teams.length > 0 && user.teams.map((t) => (
+                <span key={t} className="text-xs px-3 py-1 rounded-full font-medium bg-teal-50 text-teal-700">
+                  {t}
                 </span>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -148,8 +148,8 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium text-slate-700">{user.fullName || '-'}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-xs text-slate-400 mb-1">Takim</p>
-                <p className="text-sm font-medium text-slate-700">{user.team || '-'}</p>
+                <p className="text-xs text-slate-400 mb-1">Takimlar</p>
+                <p className="text-sm font-medium text-slate-700">{user.teams && user.teams.length > 0 ? user.teams.join(', ') : '-'}</p>
               </div>
             </div>
             <button

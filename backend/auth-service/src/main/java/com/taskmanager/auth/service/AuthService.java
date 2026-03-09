@@ -68,9 +68,9 @@ public class AuthService {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword())) // hash the password before saving
+                .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .team(request.getTeam())
+                .teams(request.getTeams() != null ? new HashSet<>(request.getTeams()) : new HashSet<>())
                 .roles(new HashSet<>(roles))
                 .enabled(true)
                 .build();
@@ -115,7 +115,7 @@ public class AuthService {
             userRepository.save(user);
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String accessToken = jwtService.generateAccessToken(userDetails, user.getId());
+            String accessToken = jwtService.generateAccessToken(userDetails, user.getId(), user.getTeams());
             String refreshToken = jwtService.generateRefreshToken(userDetails);
 
             // store refresh token in redis for later validation
@@ -174,7 +174,7 @@ public class AuthService {
             throw new AuthException("Refresh token expired", HttpStatus.UNAUTHORIZED);
         }
 
-        String newAccessToken = jwtService.generateAccessToken(userDetails, user.getId());
+        String newAccessToken = jwtService.generateAccessToken(userDetails, user.getId(), user.getTeams());
         String newRefreshToken = jwtService.generateRefreshToken(userDetails);
 
         tokenService.storeRefreshToken(user.getId(), newRefreshToken);

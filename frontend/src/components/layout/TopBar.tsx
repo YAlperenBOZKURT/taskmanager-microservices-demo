@@ -20,33 +20,38 @@ export default function TopBar() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    loadUnreadCount();
-    // poll for new notifications every 30 seconds
-    const interval = setInterval(loadUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    let cancelled = false;
 
-  const loadUnreadCount = async () => {
-    try {
-      const count = await notificationService.getUnreadCount();
-      setUnreadCount(count);
-    } catch {
-      // silent
-    }
-  };
+    const fetchCount = async () => {
+      try {
+        const count = await notificationService.getUnreadCount();
+        if (!cancelled) setUnreadCount(count);
+      } catch {
+        // silent
+      }
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  // figure out the page title from the current URL path
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/') return 'Panel';
+    if (path === '/my') return 'Sayfam';
     if (path === '/tasks') return 'Görevler';
     if (path.startsWith('/tasks/')) return 'Görev Detayı';
     if (path === '/approvals') return 'Onay Talepleri';
+    if (path === '/teams') return 'Takımlar';
     if (path === '/users') return 'Kullanıcılar';
     if (path === '/notifications') return 'Bildirimler';
     if (path === '/profile') return 'Profil';

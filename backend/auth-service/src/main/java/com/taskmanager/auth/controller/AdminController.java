@@ -88,14 +88,36 @@ public class AdminController {
         return ResponseEntity.ok(user);
     }
 
-    @PatchMapping("/users/{userId}/team")
+    @PutMapping("/users/{userId}/teams")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<UserDto> updateUserTeam(
+    public ResponseEntity<UserDto> setUserTeams(
+            @PathVariable UUID userId,
+            @RequestBody Map<String, Set<String>> body) {
+        Set<String> teams = body.get("teams");
+        log.info("PUT /api/admin/users/{}/teams - teams: {}", userId, teams);
+        UserDto user = userService.setUserTeams(userId, teams);
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/users/{userId}/teams/add")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<UserDto> addUserToTeam(
             @PathVariable UUID userId,
             @RequestBody Map<String, String> body) {
         String team = body.get("team");
-        log.info("PATCH /api/admin/users/{}/team - team: {}", userId, team);
-        UserDto user = userService.updateUserTeam(userId, team);
+        log.info("POST /api/admin/users/{}/teams/add - team: {}", userId, team);
+        UserDto user = userService.addUserToTeam(userId, team);
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/users/{userId}/teams/remove")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<UserDto> removeUserFromTeam(
+            @PathVariable UUID userId,
+            @RequestBody Map<String, String> body) {
+        String team = body.get("team");
+        log.info("POST /api/admin/users/{}/teams/remove - team: {}", userId, team);
+        UserDto user = userService.removeUserFromTeam(userId, team);
         return ResponseEntity.ok(user);
     }
 
@@ -108,6 +130,12 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/teams")
+    public ResponseEntity<java.util.List<String>> getAllTeams() {
+        log.info("GET /api/admin/teams");
+        return ResponseEntity.ok(userService.getAllTeams());
+    }
+
     @PatchMapping("/users/{userId}/profile")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<UserDto> updateUserProfile(
@@ -117,8 +145,7 @@ public class AdminController {
         UserDto user = userService.updateUserProfile(
                 userId,
                 body.get("fullName"),
-                body.get("email"),
-                body.get("team")
+                body.get("email")
         );
         return ResponseEntity.ok(user);
     }

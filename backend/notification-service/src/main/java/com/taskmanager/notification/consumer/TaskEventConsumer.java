@@ -1,6 +1,6 @@
 /**
  * Picks up task lifecycle events from kafka and notifies relevant users
- * (creator, assignees, team leader)
+ * (creator, assignees)
  * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.consumer;
@@ -24,13 +24,11 @@ public class TaskEventConsumer {
 
     private final NotificationService notificationService;
 
-    // new task created - notify everyone involved
     @KafkaListener(topics = KafkaConfig.TASK_CREATED_TOPIC, groupId = "notification-service-group")
     public void handleTaskCreated(TaskEvent event) {
         log.info("Received TASK_CREATED event: taskId={}, title={}", event.getTaskId(), event.getTitle());
 
         try {
-            // Notify creator
             notifyUser(
                     event.getCreatorId(),
                     "Yeni Gorev Olusturuldu",
@@ -42,7 +40,6 @@ public class TaskEventConsumer {
                     event
             );
 
-            // notify assignees (skip the creator, they already know)
             if (event.getAssigneeIds() != null) {
                 for (UUID assigneeId : event.getAssigneeIds()) {
                     if (!assigneeId.equals(event.getCreatorId())) {
@@ -59,20 +56,6 @@ public class TaskEventConsumer {
                     }
                 }
             }
-
-            // give the team lead a heads up too
-            if (event.getTeamLeaderId() != null && !event.getTeamLeaderId().equals(event.getCreatorId())) {
-                notifyUser(
-                        event.getTeamLeaderId(),
-                        "Ekibinize Yeni Gorev Eklendi",
-                        String.format("<strong>%s</strong> gorevi ekibinize eklendi.<br>"
-                                + "Durum: <strong>%s</strong> | Oncelik: <strong>%s</strong>",
-                                event.getTitle(), event.getStatus(), event.getPriority()),
-                        NotificationType.TASK_CREATED,
-                        event.getTaskId().toString(),
-                        event
-                );
-            }
         } catch (Exception e) {
             log.error("Failed to process TASK_CREATED event: {}", e.getMessage(), e);
         }
@@ -83,7 +66,6 @@ public class TaskEventConsumer {
         log.info("Received TASK_UPDATED event: taskId={}, title={}", event.getTaskId(), event.getTitle());
 
         try {
-            // Notify assignees
             if (event.getAssigneeIds() != null) {
                 for (UUID assigneeId : event.getAssigneeIds()) {
                     notifyUser(
@@ -98,20 +80,6 @@ public class TaskEventConsumer {
                     );
                 }
             }
-
-            // Notify team leader
-            if (event.getTeamLeaderId() != null) {
-                notifyUser(
-                        event.getTeamLeaderId(),
-                        "Ekip Gorevi Guncellendi",
-                        String.format("Ekibinizdeki <strong>%s</strong> gorevi guncellendi.<br>"
-                                + "Guncel Durum: <strong>%s</strong>",
-                                event.getTitle(), event.getStatus()),
-                        NotificationType.TASK_UPDATED,
-                        event.getTaskId().toString(),
-                        event
-                );
-            }
         } catch (Exception e) {
             log.error("Failed to process TASK_UPDATED event: {}", e.getMessage(), e);
         }
@@ -122,7 +90,6 @@ public class TaskEventConsumer {
         log.info("Received TASK_DELETED event: taskId={}, title={}", event.getTaskId(), event.getTitle());
 
         try {
-            // Notify assignees
             if (event.getAssigneeIds() != null) {
                 for (UUID assigneeId : event.getAssigneeIds()) {
                     notifyUser(
@@ -134,18 +101,6 @@ public class TaskEventConsumer {
                             event
                     );
                 }
-            }
-
-            // Notify team leader
-            if (event.getTeamLeaderId() != null) {
-                notifyUser(
-                        event.getTeamLeaderId(),
-                        "Ekip Gorevi Silindi",
-                        String.format("Ekibinizdeki <strong>%s</strong> gorevi silindi.", event.getTitle()),
-                        NotificationType.TASK_DELETED,
-                        event.getTaskId().toString(),
-                        event
-                );
             }
         } catch (Exception e) {
             log.error("Failed to process TASK_DELETED event: {}", e.getMessage(), e);
@@ -176,12 +131,11 @@ public class TaskEventConsumer {
         }
     }
 
-    // helper to avoid repeating the same notification call everywhere
     private void notifyUser(UUID userId, String title, String message,
                             NotificationType type, String referenceId, TaskEvent event) {
         notificationService.createAndSend(
                 userId.toString(),
-                null, // email not available from TaskEvent - could be fetched from auth-service if needed
+                null,
                 title,
                 message,
                 type,

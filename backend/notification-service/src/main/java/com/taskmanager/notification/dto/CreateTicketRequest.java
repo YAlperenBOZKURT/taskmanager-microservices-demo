@@ -5,7 +5,10 @@
 package com.taskmanager.notification.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -13,14 +16,14 @@ import lombok.*;
 @AllArgsConstructor
 public class CreateTicketRequest {
 
-    @NotBlank(message = "Recipient ID is required")
-    private String recipientId;
+    @NotEmpty(message = "At least one receiver is required")
+    private List<String> receiverIds;
 
-    private String recipientRole;
+    private List<String> teamIds;
 
     @NotBlank(message = "Title is required")
     private String title;
 
-    @NotBlank(message = "Content is required")
-    private String content;
+    @NotBlank(message = "Message is required")
+    private String message;
 }

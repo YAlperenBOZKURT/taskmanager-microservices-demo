@@ -19,9 +19,8 @@ public class TaskEvent {
     private UUID taskId;
     private String title;
     private String eventType;
+    private String team;
     private UUID creatorId;
-    private UUID approverId;
-    private UUID teamLeaderId;
     private Set<UUID> assigneeIds;
     private String status;
     private String priority;

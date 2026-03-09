@@ -38,25 +38,36 @@ export default function TicketModal({ isOpen, onClose }: TicketModalProps) {
 
   const loadRecipients = async () => {
     try {
-      // fetch all users and filter based on who the current user can send tickets to
-      const res = await userService.getAllUsers(0, 100);
-      let filtered = res.content;
+      let allUsers: User[] = [];
 
-      if (isAdmin() && !isSuperAdmin()) {
-        // Admin can send to super admins
-        filtered = filtered.filter((u: User) =>
+      if (isSuperAdmin() || isAdmin()) {
+        const res = await userService.getAllUsers(0, 100);
+        allUsers = res.content;
+      } else {
+        const myTeams = user?.teams || [];
+        for (const team of myTeams) {
+          const res = await userService.getTeamMembers(team, 0, 100);
+          allUsers.push(...res.content);
+        }
+        allUsers = allUsers.filter((u, i, arr) => arr.findIndex((x) => x.id === u.id) === i);
+      }
+
+      let filtered: User[];
+      if (isSuperAdmin()) {
+        filtered = allUsers.filter((u: User) => u.id !== user?.id);
+      } else if (isAdmin()) {
+        filtered = allUsers.filter((u: User) =>
           u.roles.includes(Role.ROLE_SUPER_ADMIN) && u.id !== user?.id
         );
-      } else if (!isAdmin()) {
-        // User can send to admins and super admins
-        filtered = filtered.filter((u: User) =>
+      } else {
+        filtered = allUsers.filter((u: User) =>
           (u.roles.includes(Role.ROLE_ADMIN) || u.roles.includes(Role.ROLE_SUPER_ADMIN)) && u.id !== user?.id
         );
       }
+
       setRecipients(filtered);
       if (filtered.length > 0) setRecipientId(filtered[0].id);
     } catch {
-      // Users might not have admin access, try without
       setRecipients([]);
     }
   };
@@ -69,9 +80,9 @@ export default function TicketModal({ isOpen, onClose }: TicketModalProps) {
     setError('');
     try {
       await ticketService.createTicket({
-        recipientId,
+        receiverIds: [recipientId],
         title: title.trim(),
-        content: content.trim(),
+        message: content.trim(),
       });
       setSuccess(true);
       // auto-close the modal after a short delay

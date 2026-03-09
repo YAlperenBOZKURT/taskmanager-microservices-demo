@@ -35,7 +35,7 @@ public class RegisterRequest {
 
     private String fullName;
 
-    private String team;
+    private Set<String> teams;
 
     private Set<Role> roles;
 }

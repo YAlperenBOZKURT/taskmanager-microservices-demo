@@ -15,13 +15,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -38,7 +38,6 @@ public class TaskController {
         UUID userId = getUserId(auth);
         String username = auth.getName();
 
-        // admins get instant task creation, regular users get a pending approval request
         if (isAdmin(auth)) {
             TaskDto task = taskService.createTaskDirect(request, userId, username);
             return ResponseEntity.status(HttpStatus.CREATED).body(task);
@@ -58,7 +57,8 @@ public class TaskController {
         String username = auth.getName();
 
         if (isAdmin(auth)) {
-            TaskDto task = taskService.updateTaskDirect(taskId, request, userId, username);
+            TaskDto task = taskService.updateTaskDirect(taskId, request, userId, username,
+                    getUserTeams(auth), isSuperAdmin(auth));
             return ResponseEntity.ok(task);
         } else {
             TaskApprovalRequestDto approvalRequest = taskService.requestUpdateTask(taskId, request, userId, username);
@@ -66,50 +66,107 @@ public class TaskController {
         }
     }
 
-    // ==================== Delete ====================
+    // ==================== Delete (Admin/SuperAdmin only) ====================
 
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<?> deleteTask(@PathVariable UUID taskId, Authentication auth) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<Void> deleteTask(@PathVariable UUID taskId, Authentication auth) {
+        UUID userId = getUserId(auth);
+        String username = auth.getName();
+        taskService.deleteTaskDirect(taskId, userId, username, getUserTeams(auth), isSuperAdmin(auth));
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==================== Assign (Admin/SuperAdmin only) ====================
+
+    @PostMapping("/{taskId}/assign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<TaskDto> assignTask(@PathVariable UUID taskId,
+                                               @Valid @RequestBody AssignTaskRequest request,
+                                               Authentication auth) {
+        UUID userId = getUserId(auth);
+        String username = auth.getName();
+        TaskDto task = taskService.assignTaskDirect(taskId, request, userId, username,
+                getUserTeams(auth), isSuperAdmin(auth));
+        return ResponseEntity.ok(task);
+    }
+
+    // ==================== Status Transitions ====================
+
+    @PostMapping("/{taskId}/mark-pending")
+    public ResponseEntity<TaskDto> markTaskPending(@PathVariable UUID taskId, Authentication auth) {
+        UUID userId = getUserId(auth);
+        String username = auth.getName();
+        TaskDto task = taskService.markTaskPending(taskId, userId, username,
+                getUserTeams(auth), isSuperAdmin(auth));
+        return ResponseEntity.ok(task);
+    }
+
+    @PostMapping("/{taskId}/approve-completion")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<TaskDto> approveCompletion(@PathVariable UUID taskId, Authentication auth) {
+        UUID userId = getUserId(auth);
+        String username = auth.getName();
+        TaskDto task = taskService.approveCompletion(taskId, userId, username,
+                getUserTeams(auth), isSuperAdmin(auth));
+        return ResponseEntity.ok(task);
+    }
+
+    @PostMapping("/{taskId}/complete")
+    public ResponseEntity<?> completeTask(@PathVariable UUID taskId,
+                                          @RequestBody(required = false) Map<String, String> body,
+                                          Authentication auth) {
         UUID userId = getUserId(auth);
         String username = auth.getName();
 
         if (isAdmin(auth)) {
-            taskService.deleteTaskDirect(taskId, userId, username);
-            return ResponseEntity.noContent().build();
+            TaskDto task = taskService.markTaskPending(taskId, userId, username,
+                    getUserTeams(auth), isSuperAdmin(auth));
+            return ResponseEntity.ok(task);
         } else {
-            TaskApprovalRequestDto approvalRequest = taskService.requestDeleteTask(taskId, userId, username);
+            String message = body != null ? body.get("message") : null;
+            TaskApprovalRequestDto approvalRequest = taskService.requestCompleteTask(
+                    taskId, userId, username, message);
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(approvalRequest);
         }
     }
 
-    // ==================== Assign ====================
+    // ==================== Progress Entries ====================
 
-    @PostMapping("/{taskId}/assign")
-    public ResponseEntity<?> assignTask(@PathVariable UUID taskId,
-                                        @Valid @RequestBody AssignTaskRequest request,
-                                        Authentication auth) {
+    @PostMapping("/{taskId}/progress")
+    public ResponseEntity<TaskProgressEntryDto> addProgressEntry(
+            @PathVariable UUID taskId,
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
         UUID userId = getUserId(auth);
         String username = auth.getName();
-
-        if (isAdmin(auth)) {
-            TaskDto task = taskService.assignTaskDirect(taskId, request, userId, username);
-            return ResponseEntity.ok(task);
-        } else {
-            TaskApprovalRequestDto approvalRequest = taskService.requestAssignTask(taskId, request, userId, username);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(approvalRequest);
+        String message = body.get("message");
+        if (message == null || message.isBlank()) {
+            return ResponseEntity.badRequest().build();
         }
+        TaskProgressEntryDto entry = taskService.addProgressEntry(
+                taskId, message, userId, username, getUserTeams(auth), isSuperAdmin(auth));
+        return ResponseEntity.status(HttpStatus.CREATED).body(entry);
+    }
+
+    @GetMapping("/{taskId}/progress")
+    public ResponseEntity<List<TaskProgressEntryDto>> getProgressEntries(@PathVariable UUID taskId) {
+        return ResponseEntity.ok(taskService.getProgressEntries(taskId));
     }
 
     // ==================== Read ====================
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<TaskDto> getTask(@PathVariable UUID taskId) {
-        return ResponseEntity.ok(taskService.getTaskById(taskId));
+    public ResponseEntity<TaskDto> getTask(@PathVariable UUID taskId, Authentication auth) {
+        TaskDto task = taskService.getTaskById(taskId, getUserTeams(auth), isSuperAdmin(auth));
+        return ResponseEntity.ok(task);
     }
 
     @GetMapping
-    public ResponseEntity<Page<TaskDto>> getAllTasks(@PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(taskService.getAllTasks(pageable));
+    public ResponseEntity<Page<TaskDto>> getAllTasks(Authentication auth,
+                                                     @PageableDefault(size = 20) Pageable pageable) {
+        Page<TaskDto> tasks = taskService.getAllTasks(getUserTeams(auth), isSuperAdmin(auth), pageable);
+        return ResponseEntity.ok(tasks);
     }
 
     @GetMapping("/my-tasks")
@@ -128,14 +185,9 @@ public class TaskController {
 
     @GetMapping("/by-status/{status}")
     public ResponseEntity<Page<TaskDto>> getByStatus(@PathVariable TaskStatus status,
+                                                      Authentication auth,
                                                       @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(taskService.getTasksByStatus(status, pageable));
-    }
-
-    @GetMapping("/by-team-leader/{teamLeaderId}")
-    public ResponseEntity<Page<TaskDto>> getByTeamLeader(@PathVariable UUID teamLeaderId,
-                                                          @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(taskService.getTasksByTeamLeader(teamLeaderId, pageable));
+        return ResponseEntity.ok(taskService.getTasksByStatus(status, getUserTeams(auth), isSuperAdmin(auth), pageable));
     }
 
     // ==================== Attachments ====================
@@ -164,15 +216,30 @@ public class TaskController {
 
     // ==================== Helpers ====================
 
-    // userId is stored in the credentials field by our gateway auth filter
     private UUID getUserId(Authentication auth) {
         return UUID.fromString((String) auth.getCredentials());
     }
 
-    // both ADMIN and SUPER_ADMIN can bypass the approval flow
+    @SuppressWarnings("unchecked")
+    private Set<String> getUserTeams(Authentication auth) {
+        if (auth.getDetails() instanceof Map) {
+            Object teams = ((Map<String, Object>) auth.getDetails()).get("teams");
+            if (teams instanceof Set) {
+                return (Set<String>) teams;
+            }
+        }
+        return Collections.emptySet();
+    }
+
     private boolean isAdmin(Authentication auth) {
         return auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_SUPER_ADMIN"));
+    }
+
+    private boolean isSuperAdmin(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_SUPER_ADMIN"));
     }
 }

@@ -43,6 +43,11 @@ public class JwtValidationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // let CORS preflight requests through without auth
+        if (exchange.getRequest().getMethod() == org.springframework.http.HttpMethod.OPTIONS) {
+            return chain.filter(exchange);
+        }
+
         String path = exchange.getRequest().getPath().toString();
 
         // check if the path is public so we dont need auth
@@ -70,18 +75,21 @@ public class JwtValidationFilter implements GlobalFilter, Ordered {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            // extract user info from jwt and pass it to downstream services
             String userId = claims.get("userId", String.class);
             String username = claims.getSubject();
             @SuppressWarnings("unchecked")
             List<String> roles = claims.get("roles", List.class);
             String rolesHeader = roles != null ? String.join(",", roles) : "";
 
-            // add user details as headers so downstream services know who made the request
+            @SuppressWarnings("unchecked")
+            List<String> teams = claims.get("teams", List.class);
+            String teamsHeader = teams != null ? String.join(",", teams) : "";
+
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", userId)
                     .header("X-Username", username)
                     .header("X-User-Roles", rolesHeader)
+                    .header("X-User-Teams", teamsHeader)
                     .build();
 
             log.info("JWT validated - user: {}, path: {}", username, path);

@@ -1,3 +1,47 @@
+## Updates
+
+<details>
+<summary><strong>09.03.2026</strong></summary>
+
+The backend has been updated to work on a team-based structure.  
+The integration of the changes into the frontend was carried out with AI assistance.
+
+Missing:
+- Notification system is not working correctly.
+  - ADMIN_BROADCAST notifications are not reaching admin users; separate notifications need to be created for each admin.
+  - Ticket system: teamIds field is saved to the ticket but notifications are not sent to team members.
+  - Ticket system: Permission checks based on sender role and team membership are missing.
+- There are some missing parts on the UI side.
+- Logging system is not working as expected.
+- Some dashboard cards on the frontend are not clickable (ticket cards, request results, etc.).
+- In Task Service, team access control for user requests (requestCreateTask, requestUpdateTask, requestCompleteTask) is not enforced on the backend side; the check exists on the frontend but is missing on the backend.
+
+</details>
+
+---
+
+## Güncellemeler
+
+<details>
+<summary><strong>09.03.2026</strong></summary>
+
+Backend takım bazlı çalışacak şekilde güncellendi.  
+Yapılan değişikliklerin frontend tarafına entegrasyonu yapay zeka desteği ile gerçekleştirildi.
+
+Eksikler:
+- Bildirim sistemi doğru çalışmıyor.
+  - ADMIN_BROADCAST bildirimleri admin kullanıcılara ulaşmıyor; her admin için ayrı bildirim oluşturulması gerekiyor.
+  - Ticket sistemi: teamIds alanı ticket'a yazılıyor ancak takım üyelerine bildirim gönderilmiyor.
+  - Ticket sistemi: Gönderen rolü ve takım üyeliği bazlı izin kontrolü eksik.
+- UI tarafında bazı eksiklikler bulunuyor.
+- Loglama sistemi beklenildiği gibi çalışmıyor.
+- Frontend'te dashboard kartlarının bir kısmı tıklanabilir değil (ticket kartları, talep sonuçları vb.).
+- Task Service'te kullanıcı taleplerinde (requestCreateTask, requestUpdateTask, requestCompleteTask) takım erişim kontrolü backend tarafında yapılmıyor; frontend tarafında kontrol mevcut ancak backend'de eksik.
+
+</details>
+
+---
+
 # 📋 TaskManager - Microservices Task Management System
 
 > **Author:** Yusuf Alperen Bozkurt
@@ -35,7 +79,8 @@ Docker kurulumu sırasında karşılaştığım sorunları ve çözümlerini [`D
 
 ---
 
-## 🇬🇧 English
+<details>
+<summary><strong>🇬🇧 English</strong></summary>
 
 ### 📖 About the Project
 
@@ -235,9 +280,12 @@ npm run dev
 | Notifications | Notification center |
 | Profile | Profile editing and password change |
 
+</details>
+
 ---
 
-## 🇹🇷 Türkçe
+<details>
+<summary><strong>🇹🇷 Türkçe</strong></summary>
 
 ### 📖 Proje Hakkında
 
@@ -436,3 +484,5 @@ npm run dev
 | Users | Kullanıcı yönetimi (admin) |
 | Notifications | Bildirim merkezi |
 | Profile | Profil düzenleme ve şifre değiştirme |
+
+</details>

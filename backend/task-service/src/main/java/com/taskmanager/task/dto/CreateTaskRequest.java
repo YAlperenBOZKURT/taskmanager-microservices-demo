@@ -5,6 +5,7 @@
 package com.taskmanager.task.dto;
 
 import com.taskmanager.task.entity.TaskPriority;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -25,11 +26,12 @@ public class CreateTaskRequest {
 
     private String description;
 
-    private TaskPriority priority;
+    private String team;
 
-    private UUID teamLeaderId;
+    private TaskPriority priority;
 
     private Set<UUID> assigneeIds;
 
+    @FutureOrPresent(message = "Due date must not be in the past")
     private LocalDateTime dueDate;
 }

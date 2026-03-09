@@ -11,13 +11,13 @@ export const notificationService = {
   },
 
   getUnread: async (): Promise<NotificationDto[]> => {
-    const res = await api.get('/api/notifications/unread');
+    const res = await api.get('/api/notifications/unread', { _silent: true } as never);
     return res.data;
   },
 
   getUnreadCount: async (): Promise<number> => {
-    const res = await api.get('/api/notifications/unread/count');
-    return res.data.count;
+    const res = await api.get('/api/notifications/unread/count', { _silent: true } as never);
+    return res.data.count ?? 0;
   },
 
   markAsRead: async (notificationId: string): Promise<NotificationDto> => {

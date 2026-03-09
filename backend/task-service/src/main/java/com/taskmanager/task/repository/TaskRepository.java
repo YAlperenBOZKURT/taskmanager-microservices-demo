@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.UUID;
 
 @Repository
@@ -20,9 +21,17 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     Page<Task> findByCreatorId(UUID creatorId, Pageable pageable);
 
-    Page<Task> findByTeamLeaderId(UUID teamLeaderId, Pageable pageable);
+    Page<Task> findByTeam(String team, Pageable pageable);
+
+    @Query("SELECT t FROM Task t WHERE t.team IN :teams")
+    Page<Task> findByTeamIn(@Param("teams") Collection<String> teams, Pageable pageable);
 
     Page<Task> findByStatus(TaskStatus status, Pageable pageable);
+
+    @Query("SELECT t FROM Task t WHERE t.team IN :teams AND t.status = :status")
+    Page<Task> findByTeamInAndStatus(@Param("teams") Collection<String> teams,
+                                      @Param("status") TaskStatus status,
+                                      Pageable pageable);
 
     @Query("SELECT t FROM Task t JOIN t.assigneeIds a WHERE a = :assigneeId")
     Page<Task> findByAssigneeId(@Param("assigneeId") UUID assigneeId, Pageable pageable);

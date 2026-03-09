@@ -1,40 +1,63 @@
-// TaskManager Frontend - Tasks list page with filtering and create modal
-// Author: Yusuf Alperen Bozkurt
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { taskService } from '../services/taskService';
-import type { TaskDto } from '../types';
+import { userService } from '../services/userService';
+import type { TaskDto, User } from '../types';
 import { formatDate, getPriorityColor, getPriorityLabel, getStatusColor, getStatusLabel } from '../utils/helpers';
-import { HiOutlinePlus, HiOutlineFunnel } from 'react-icons/hi2';
+import toast from 'react-hot-toast';
+import { HiOutlinePlus, HiOutlineFunnel, HiOutlineXMark } from 'react-icons/hi2';
 
 export default function TasksPage() {
-  const { isSuperAdmin, isAdmin } = useAuthStore();
+  const { user, isSuperAdmin, isAdmin } = useAuthStore();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<TaskDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [teamFilter, setTeamFilter] = useState<string>('ALL');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Create task form
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newPriority, setNewPriority] = useState('MEDIUM');
   const [newDueDate, setNewDueDate] = useState('');
+  const [newTeam, setNewTeam] = useState('');
+  const [newAssignees, setNewAssignees] = useState<string[]>([]);
+  const [teamUsers, setTeamUsers] = useState<User[]>([]);
+  const [loadingTeamUsers, setLoadingTeamUsers] = useState(false);
+  const [allTeams, setAllTeams] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const isRegularUser = !isSuperAdmin() && !isAdmin();
 
   useEffect(() => {
     loadTasks();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, teamFilter]);
+
+  useEffect(() => {
+    userService.getAllTeams().then(setAllTeams).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (newTeam) {
+      setLoadingTeamUsers(true);
+      userService.getUsersByTeam(newTeam, 0, 100)
+        .then((res) => setTeamUsers(res.content))
+        .catch(() => setTeamUsers([]))
+        .finally(() => setLoadingTeamUsers(false));
+    } else {
+      setTeamUsers([]);
+      setNewAssignees([]);
+    }
+  }, [newTeam]);
 
   const loadTasks = async () => {
     setLoading(true);
     try {
       let res;
-      // filter tasks based on the selected status or user role
       if (statusFilter !== 'ALL') {
         res = await taskService.getTasksByStatus(statusFilter, page, 20);
       } else if (isSuperAdmin()) {
@@ -44,48 +67,96 @@ export default function TasksPage() {
       } else {
         res = await taskService.getAssignedToMe(page, 20);
       }
-      setTasks(res.content);
+
+      let filtered = res.content;
+      if (teamFilter !== 'ALL') {
+        filtered = filtered.filter((t) => t.team === teamFilter);
+      }
+
+      setTasks(filtered);
       setTotalPages(res.totalPages);
-    } catch (err) {
-      console.error('Error loading tasks:', err);
+    } catch {
+      // handled by interceptor
     } finally {
       setLoading(false);
     }
   };
 
+  const validateCreateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!newTeam) errors.team = 'Takım seçimi zorunludur';
+    if (newAssignees.length === 0) errors.assignees = 'En az bir kişi atanmalıdır';
+    if (!newTitle.trim()) errors.title = 'Başlık zorunludur';
+    if (!newDesc.trim()) errors.description = 'Açıklama zorunludur';
+    if (!newDueDate) {
+      errors.dueDate = 'Son tarih zorunludur';
+    } else if (new Date(newDueDate) < new Date()) {
+      errors.dueDate = 'Son tarih geçmişte olamaz';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!validateCreateForm()) return;
+
     setCreating(true);
     try {
-      // send new task to the backend
       await taskService.createTask({
         title: newTitle.trim(),
         description: newDesc.trim(),
         priority: newPriority,
         dueDate: newDueDate || undefined,
+        team: newTeam || undefined,
+        assigneeIds: newAssignees,
       });
-      // close the modal after submitting and reset form
+
+      if (isRegularUser) {
+        toast.success('Görev oluşturma talebiniz gönderildi. Yönetici onayı bekleniyor.');
+      } else {
+        toast.success('Görev başarıyla oluşturuldu.');
+      }
+
       setShowCreateModal(false);
-      setNewTitle('');
-      setNewDesc('');
-      setNewPriority('MEDIUM');
-      setNewDueDate('');
+      resetCreateForm();
       loadTasks();
-    } catch (err) {
-      console.error('Error creating task:', err);
+    } catch {
+      // toast handled by api interceptor
     } finally {
       setCreating(false);
     }
   };
 
-  const statuses = ['ALL', 'ACTIVE', 'PASSIVE', 'APPROVED'];
+  const resetCreateForm = () => {
+    setNewTitle('');
+    setNewDesc('');
+    setNewPriority('MEDIUM');
+    setNewDueDate('');
+    setNewTeam('');
+    setNewAssignees([]);
+    setTeamUsers([]);
+    setValidationErrors({});
+  };
+
+  const toggleAssignee = (userId: string) => {
+    setNewAssignees((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const availableTeams = isSuperAdmin() ? allTeams : (user?.teams || []);
+  const statuses = ['ALL', 'ACTIVE', 'PENDING', 'COMPLETED'];
   const statusLabels: Record<string, string> = {
     ALL: 'Tümü',
-    ACTIVE: 'Aktif',
-    PASSIVE: 'Pasif',
-    APPROVED: 'Onaylı',
+    ACTIVE: 'Active',
+    PENDING: 'Pending Approval',
+    COMPLETED: 'Onaylandı',
   };
+
+  const userTeams = user?.teams || [];
 
   return (
     <div className="space-y-6">
@@ -102,25 +173,40 @@ export default function TasksPage() {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <HiOutlinePlus className="w-4 h-4" />
-          Yeni Görev
+          {isRegularUser ? 'Görev Talebi Oluştur' : 'Yeni Görev'}
         </button>
       </div>
 
-      {/* Filter */}
-      <div className="flex flex-wrap gap-2">
-        {statuses.map((s) => (
-          <button
-            key={s}
-            onClick={() => { setStatusFilter(s); setPage(0); }}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              statusFilter === s
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-            }`}
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap gap-2">
+          {statuses.map((s) => (
+            <button
+              key={s}
+              onClick={() => { setStatusFilter(s); setPage(0); }}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                statusFilter === s
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {statusLabels[s]}
+            </button>
+          ))}
+        </div>
+
+        {userTeams.length > 1 && (
+          <select
+            value={teamFilter}
+            onChange={(e) => { setTeamFilter(e.target.value); setPage(0); }}
+            className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           >
-            {statusLabels[s]}
-          </button>
-        ))}
+            <option value="ALL">Tüm Takımlar</option>
+            {userTeams.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Task List */}
@@ -140,6 +226,7 @@ export default function TasksPage() {
               <thead>
                 <tr className="border-b border-slate-100">
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4">Başlık</th>
+                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4 hidden md:table-cell">Takım</th>
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4 hidden md:table-cell">Öncelik</th>
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4 hidden md:table-cell">Durum</th>
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-6 py-4 hidden lg:table-cell">Son Tarih</th>
@@ -164,6 +251,11 @@ export default function TasksPage() {
                           {getStatusLabel(task.status)}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-teal-50 text-teal-700">
+                        {task.team || '-'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 hidden md:table-cell">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${getPriorityColor(task.priority)}`}>
@@ -215,34 +307,111 @@ export default function TasksPage() {
       {/* Create Task Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8">
-            <h2 className="text-xl font-bold text-slate-800 mb-6">Yeni Görev Oluştur</h2>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowCreateModal(false); resetCreateForm(); }} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 md:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-800">
+                {isRegularUser ? 'Görev Oluşturma Talebi' : 'Yeni Görev Oluştur'}
+              </h2>
+              <button onClick={() => { setShowCreateModal(false); resetCreateForm(); }} className="p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                <HiOutlineXMark className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+            {isRegularUser && (
+              <p className="text-sm text-slate-500 mb-6">
+                Talebiniz yöneticinize iletilecek ve onay sonrası görev oluşturulacaktır.
+              </p>
+            )}
             <form onSubmit={handleCreateTask} className="space-y-5">
+              {/* Team Selection (First) */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Başlık</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Takım *</label>
+                <select
+                  value={newTeam}
+                  onChange={(e) => { setNewTeam(e.target.value); setNewAssignees([]); }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${validationErrors.team ? 'border-red-300' : 'border-slate-200'}`}
+                >
+                  <option value="">Takım Seçin</option>
+                  {availableTeams.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                {validationErrors.team && <p className="text-xs text-red-500 mt-1">{validationErrors.team}</p>}
+              </div>
+
+              {/* Assignee Selection (Depends on Team) */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Atanan Kişiler *</label>
+                {!newTeam ? (
+                  <div className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-100 text-sm text-slate-400">
+                    Önce bir takım seçin
+                  </div>
+                ) : loadingTeamUsers ? (
+                  <div className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-400 flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600" />
+                    Yükleniyor...
+                  </div>
+                ) : teamUsers.length === 0 ? (
+                  <div className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-400">
+                    Bu takımda kullanıcı bulunamadı
+                  </div>
+                ) : (
+                  <div className={`rounded-xl border bg-slate-50 max-h-40 overflow-y-auto ${validationErrors.assignees ? 'border-red-300' : 'border-slate-200'}`}>
+                    {teamUsers.map((u) => (
+                      <label
+                        key={u.id}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={newAssignees.includes(u.id)}
+                          onChange={() => toggleAssignee(u.id)}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate">{u.fullName || u.username}</p>
+                          <p className="text-xs text-slate-400">@{u.username}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {newAssignees.length > 0 && (
+                  <p className="text-xs text-slate-500 mt-1">{newAssignees.length} kişi seçildi</p>
+                )}
+                {validationErrors.assignees && <p className="text-xs text-red-500 mt-1">{validationErrors.assignees}</p>}
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Başlık *</label>
                 <input
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${validationErrors.title ? 'border-red-300' : 'border-slate-200'}`}
                   placeholder="Görev başlığı"
-                  required
                 />
+                {validationErrors.title && <p className="text-xs text-red-500 mt-1">{validationErrors.title}</p>}
               </div>
+
+              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Açıklama</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Açıklama *</label>
                 <textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none ${validationErrors.description ? 'border-red-300' : 'border-slate-200'}`}
                   placeholder="Görev açıklaması"
                 />
+                {validationErrors.description && <p className="text-xs text-red-500 mt-1">{validationErrors.description}</p>}
               </div>
+
+              {/* Priority + Due Date */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Öncelik</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Öncelik *</label>
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
@@ -255,19 +424,22 @@ export default function TasksPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Son Tarih</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Son Tarih *</label>
                   <input
                     type="datetime-local"
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${validationErrors.dueDate ? 'border-red-300' : 'border-slate-200'}`}
                   />
+                  {validationErrors.dueDate && <p className="text-xs text-red-500 mt-1">{validationErrors.dueDate}</p>}
                 </div>
               </div>
+
+              {/* Buttons */}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
                   className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   İptal
@@ -277,7 +449,7 @@ export default function TasksPage() {
                   disabled={creating}
                   className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  {creating ? 'Oluşturuluyor...' : 'Oluştur'}
+                  {creating ? 'Gönderiliyor...' : isRegularUser ? 'Talep Gönder' : 'Oluştur'}
                 </button>
               </div>
             </form>

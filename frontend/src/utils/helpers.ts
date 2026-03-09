@@ -3,7 +3,6 @@
 
 import { Role } from '../types';
 
-// convert role enum to a human-readable label
 export function getRoleLabel(role: Role): string {
   switch (role) {
     case Role.ROLE_SUPER_ADMIN:
@@ -17,14 +16,12 @@ export function getRoleLabel(role: Role): string {
   }
 }
 
-// figure out the highest privilege role the user has
 export function getHighestRole(roles: Role[]): Role {
   if (roles.includes(Role.ROLE_SUPER_ADMIN)) return Role.ROLE_SUPER_ADMIN;
   if (roles.includes(Role.ROLE_ADMIN)) return Role.ROLE_ADMIN;
   return Role.ROLE_USER;
 }
 
-// grab initials from the user's full name for avatar display
 export function getInitials(fullName: string | null | undefined): string {
   if (!fullName) return '?';
   return fullName
@@ -48,7 +45,6 @@ export function getRoleBadgeColor(role: Role): string {
   }
 }
 
-// format the date to something readable (Turkish locale)
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
@@ -89,11 +85,11 @@ export function getPriorityLabel(priority: string): string {
 export function getStatusColor(status: string): string {
   switch (status) {
     case 'ACTIVE':
-      return 'bg-green-100 text-green-700';
-    case 'PASSIVE':
-      return 'bg-gray-100 text-gray-500';
-    case 'APPROVED':
       return 'bg-blue-100 text-blue-700';
+    case 'PENDING':
+      return 'bg-orange-100 text-orange-700';
+    case 'COMPLETED':
+      return 'bg-green-100 text-green-700';
     default:
       return 'bg-gray-100 text-gray-700';
   }
@@ -101,10 +97,10 @@ export function getStatusColor(status: string): string {
 
 export function getStatusLabel(status: string): string {
   switch (status) {
-    case 'ACTIVE': return 'Aktif';
-    case 'PASSIVE': return 'Pasif';
-    case 'APPROVED': return 'Onaylı';
-    case 'PENDING': return 'Beklemede';
+    case 'ACTIVE': return 'Active';
+    case 'PENDING': return 'Pending Approval';
+    case 'COMPLETED': return 'Onaylandı';
+    case 'APPROVED': return 'Onaylandı';
     case 'REJECTED': return 'Reddedildi';
     default: return status;
   }

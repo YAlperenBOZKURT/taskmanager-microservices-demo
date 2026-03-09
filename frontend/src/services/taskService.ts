@@ -2,7 +2,7 @@
 // Author: Yusuf Alperen Bozkurt
 
 import api from './api';
-import type { TaskDto, PageResponse } from '../types';
+import type { TaskDto, AttachmentDto, TaskProgressEntryDto, PageResponse } from '../types';
 
 export const taskService = {
   getTasks: async (page = 0, size = 20): Promise<PageResponse<TaskDto>> => {
@@ -20,11 +20,6 @@ export const taskService = {
     return res.data;
   },
 
-  getTasksByTeamLeader: async (teamLeaderId: string, page = 0, size = 20): Promise<PageResponse<TaskDto>> => {
-    const res = await api.get(`/api/tasks/by-team-leader/${teamLeaderId}`, { params: { page, size } });
-    return res.data;
-  },
-
   getTasksByStatus: async (status: string, page = 0, size = 20): Promise<PageResponse<TaskDto>> => {
     const res = await api.get(`/api/tasks/by-status/${status}`, { params: { page, size } });
     return res.data;
@@ -38,8 +33,8 @@ export const taskService = {
   createTask: async (data: {
     title: string;
     description?: string;
+    team?: string;
     priority?: string;
-    teamLeaderId?: string;
     assigneeIds?: string[];
     dueDate?: string;
   }) => {
@@ -50,9 +45,8 @@ export const taskService = {
   updateTask: async (taskId: string, data: {
     title?: string;
     description?: string;
-    status?: string;
+    team?: string;
     priority?: string;
-    teamLeaderId?: string;
     assigneeIds?: string[];
     dueDate?: string;
   }) => {
@@ -67,5 +61,48 @@ export const taskService = {
   assignTask: async (taskId: string, assigneeIds: string[]) => {
     const res = await api.post(`/api/tasks/${taskId}/assign`, { assigneeIds });
     return res.data;
+  },
+
+  markTaskPending: async (taskId: string): Promise<TaskDto> => {
+    const res = await api.post(`/api/tasks/${taskId}/mark-pending`);
+    return res.data;
+  },
+
+  approveCompletion: async (taskId: string): Promise<TaskDto> => {
+    const res = await api.post(`/api/tasks/${taskId}/approve-completion`);
+    return res.data;
+  },
+
+  completeTask: async (taskId: string, message?: string): Promise<unknown> => {
+    const res = await api.post(`/api/tasks/${taskId}/complete`, message ? { message } : {});
+    return res.data;
+  },
+
+  addProgressEntry: async (taskId: string, message: string): Promise<TaskProgressEntryDto> => {
+    const res = await api.post(`/api/tasks/${taskId}/progress`, { message });
+    return res.data;
+  },
+
+  getProgressEntries: async (taskId: string): Promise<TaskProgressEntryDto[]> => {
+    const res = await api.get(`/api/tasks/${taskId}/progress`);
+    return res.data;
+  },
+
+  uploadAttachment: async (taskId: string, file: File): Promise<AttachmentDto> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post(`/api/tasks/${taskId}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
+  getAttachments: async (taskId: string): Promise<AttachmentDto[]> => {
+    const res = await api.get(`/api/tasks/${taskId}/attachments`);
+    return res.data;
+  },
+
+  deleteAttachment: async (attachmentId: string) => {
+    await api.delete(`/api/tasks/attachments/${attachmentId}`);
   },
 };

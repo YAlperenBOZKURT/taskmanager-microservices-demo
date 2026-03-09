@@ -38,8 +38,8 @@ export default function ApprovalsPage() {
 
       setApprovals(filtered);
       setTotalPages(res.totalPages);
-    } catch (err) {
-      console.error('Error loading approvals:', err);
+    } catch {
+      // handled by interceptor
     } finally {
       setLoading(false);
     }
@@ -55,8 +55,8 @@ export default function ApprovalsPage() {
       setSelectedApproval(null);
       setReviewNote('');
       loadApprovals();
-    } catch (err) {
-      console.error('Review error:', err);
+    } catch {
+      // handled by interceptor
     } finally {
       setReviewing(false);
     }
@@ -81,8 +81,7 @@ export default function ApprovalsPage() {
     switch (type) {
       case 'CREATE': return 'Oluşturma';
       case 'UPDATE': return 'Güncelleme';
-      case 'DELETE': return 'Silme';
-      case 'ASSIGN': return 'Atama';
+      case 'COMPLETION': return 'Tamamlama';
       default: return type;
     }
   };

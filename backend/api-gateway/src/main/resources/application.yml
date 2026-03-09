@@ -15,9 +15,11 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOriginPatterns: "*"
             allowedMethods: "*"
             allowedHeaders: "*"
+            exposedHeaders: "*"
+            allowCredentials: false
       routes:
         # Auth Service - Auth Endpoints
         - id: auth-service

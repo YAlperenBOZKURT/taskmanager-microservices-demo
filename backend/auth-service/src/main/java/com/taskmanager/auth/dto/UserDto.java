@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,7 +27,7 @@ public class UserDto {
     private String email;
     private String fullName;
     private Set<Role> roles;
-    private String team;
+    private Set<String> teams;
     private boolean enabled;
     private LocalDateTime createdAt;
 
@@ -37,7 +38,7 @@ public class UserDto {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .roles(user.getRoles())
-                .team(user.getTeam())
+                .teams(user.getTeams())
                 .enabled(user.isEnabled())
                 .createdAt(user.getCreatedAt())
                 .build();

@@ -127,8 +127,7 @@ public class TaskApprovalEventConsumer {
         return switch (requestType) {
             case "CREATE" -> "Gorev Olusturma";
             case "UPDATE" -> "Gorev Guncelleme";
-            case "DELETE" -> "Gorev Silme";
-            case "ASSIGN" -> "Gorev Atama";
+            case "COMPLETION" -> "Gorev Tamamlama";
             default -> requestType;
         };
     }

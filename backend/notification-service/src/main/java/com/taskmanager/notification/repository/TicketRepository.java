@@ -17,11 +17,11 @@ import java.util.List;
 @Repository
 public interface TicketRepository extends MongoRepository<Ticket, String> {
 
-    Page<Ticket> findBySenderIdOrRecipientIdOrderByCreatedAtDesc(String senderId, String recipientId, Pageable pageable);
+    Page<Ticket> findBySenderIdOrReceiverIdsContainingOrderByCreatedAtDesc(String senderId, String receiverId, Pageable pageable);
 
-    Page<Ticket> findByRecipientIdOrderByCreatedAtDesc(String recipientId, Pageable pageable);
+    Page<Ticket> findByReceiverIdsContainingOrderByCreatedAtDesc(String receiverId, Pageable pageable);
 
     Page<Ticket> findBySenderIdOrderByCreatedAtDesc(String senderId, Pageable pageable);
 
-    long countByRecipientIdAndStatus(String recipientId, TicketStatus status);
+    long countByReceiverIdsContainingAndStatus(String receiverId, TicketStatus status);
 }

@@ -1,7 +1,6 @@
 // TaskManager Frontend - TypeScript type definitions and interfaces
 // Author: Yusuf Alperen Bozkurt
 
-// user roles - these match the backend enum values
 export enum Role {
   ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN',
   ROLE_ADMIN = 'ROLE_ADMIN',
@@ -14,7 +13,7 @@ export interface User {
   email: string;
   fullName: string;
   roles: Role[];
-  team: string | null;
+  teams: string[];
   enabled: boolean;
   createdAt: string;
 }
@@ -27,11 +26,10 @@ export interface AuthResponse {
   user: User;
 }
 
-// task lifecycle states
 export enum TaskStatus {
   ACTIVE = 'ACTIVE',
-  PASSIVE = 'PASSIVE',
-  APPROVED = 'APPROVED',
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
 }
 
 export enum TaskPriority {
@@ -41,18 +39,27 @@ export enum TaskPriority {
   CRITICAL = 'CRITICAL',
 }
 
+export interface TaskProgressEntryDto {
+  id: string;
+  taskId: string;
+  message: string;
+  createdBy: string;
+  createdByUsername: string;
+  createdAt: string;
+}
+
 export interface TaskDto {
   id: string;
   title: string;
   description: string;
+  team: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   creatorId: string;
-  approverId: string | null;
-  teamLeaderId: string | null;
   assigneeIds: string[];
   dueDate: string | null;
   attachments: AttachmentDto[];
+  progressEntries: TaskProgressEntryDto[];
   createdAt: string;
   updatedAt: string;
 }
@@ -76,8 +83,7 @@ export enum ApprovalStatus {
 export enum RequestType {
   CREATE = 'CREATE',
   UPDATE = 'UPDATE',
-  DELETE = 'DELETE',
-  ASSIGN = 'ASSIGN',
+  COMPLETION = 'COMPLETION',
 }
 
 export interface TaskApprovalRequestDto {
@@ -109,19 +115,24 @@ export interface NotificationDto {
   createdAt: string;
 }
 
+export enum TicketStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 export interface TicketDto {
   id: string;
   senderId: string;
   senderUsername: string;
-  recipientId: string;
-  recipientRole: string;
+  receiverIds: string[];
+  teamIds: string[];
   title: string;
-  content: string;
-  status: 'OPEN' | 'CLOSED';
+  message: string;
+  status: TicketStatus;
   createdAt: string;
 }
 
-// generic paginated response from the backend
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;

@@ -11,6 +11,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "tickets")
 @Getter
@@ -29,16 +31,18 @@ public class Ticket {
     private String senderUsername;
 
     @Indexed
-    private String recipientId;
+    @Builder.Default
+    private List<String> receiverIds = new ArrayList<>();
 
-    private String recipientRole;
+    @Builder.Default
+    private List<String> teamIds = new ArrayList<>();
 
     private String title;
 
-    private String content;
+    private String message;
 
     @Builder.Default
-    private TicketStatus status = TicketStatus.OPEN;
+    private TicketStatus status = TicketStatus.PENDING;
 
     @CreatedDate
     private LocalDateTime createdAt;

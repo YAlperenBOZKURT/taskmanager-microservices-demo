@@ -9,6 +9,7 @@ import com.taskmanager.notification.document.TicketStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,10 +20,10 @@ public class TicketDto {
     private String id;
     private String senderId;
     private String senderUsername;
-    private String recipientId;
-    private String recipientRole;
+    private List<String> receiverIds;
+    private List<String> teamIds;
     private String title;
-    private String content;
+    private String message;
     private TicketStatus status;
     private LocalDateTime createdAt;
 
@@ -31,10 +32,10 @@ public class TicketDto {
                 .id(ticket.getId())
                 .senderId(ticket.getSenderId())
                 .senderUsername(ticket.getSenderUsername())
-                .recipientId(ticket.getRecipientId())
-                .recipientRole(ticket.getRecipientRole())
+                .receiverIds(ticket.getReceiverIds())
+                .teamIds(ticket.getTeamIds())
                 .title(ticket.getTitle())
-                .content(ticket.getContent())
+                .message(ticket.getMessage())
                 .status(ticket.getStatus())
                 .createdAt(ticket.getCreatedAt())
                 .build();

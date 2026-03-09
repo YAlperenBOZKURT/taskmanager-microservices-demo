@@ -19,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -129,13 +131,37 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto updateUserTeam(UUID userId, String team) {
-        log.info("Updating team for user: userId={}, team={}", userId, team);
+    public UserDto addUserToTeam(UUID userId, String team) {
+        log.info("Adding team for user: userId={}, team={}", userId, team);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException("User not found", HttpStatus.NOT_FOUND));
 
-        user.setTeam(team);
+        user.getTeams().add(team);
+        User saved = userRepository.save(user);
+        return UserDto.fromEntity(saved);
+    }
+
+    @Transactional
+    public UserDto removeUserFromTeam(UUID userId, String team) {
+        log.info("Removing team for user: userId={}, team={}", userId, team);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AuthException("User not found", HttpStatus.NOT_FOUND));
+
+        user.getTeams().remove(team);
+        User saved = userRepository.save(user);
+        return UserDto.fromEntity(saved);
+    }
+
+    @Transactional
+    public UserDto setUserTeams(UUID userId, Set<String> teams) {
+        log.info("Setting teams for user: userId={}, teams={}", userId, teams);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AuthException("User not found", HttpStatus.NOT_FOUND));
+
+        user.setTeams(teams != null ? teams : new HashSet<>());
         User saved = userRepository.save(user);
         return UserDto.fromEntity(saved);
     }
@@ -145,8 +171,12 @@ public class UserService {
         return userRepository.findByTeam(team, pageable).map(UserDto::fromEntity);
     }
 
+    public List<String> getAllTeams() {
+        return userRepository.findAllDistinctTeams();
+    }
+
     @Transactional
-    public UserDto updateUserProfile(UUID userId, String fullName, String email, String team) {
+    public UserDto updateUserProfile(UUID userId, String fullName, String email) {
         log.info("Updating profile for user: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -154,13 +184,11 @@ public class UserService {
 
         if (fullName != null) user.setFullName(fullName);
         if (email != null) {
-            // make sure nobody else already has this email
             if (userRepository.findByEmail(email).filter(u -> !u.getId().equals(userId)).isPresent()) {
                 throw new AuthException("Email already in use", HttpStatus.CONFLICT);
             }
             user.setEmail(email);
         }
-        if (team != null) user.setTeam(team);
 
         User saved = userRepository.save(user);
         return UserDto.fromEntity(saved);

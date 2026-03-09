@@ -23,14 +23,14 @@ public class TaskDto {
     private UUID id;
     private String title;
     private String description;
+    private String team;
     private TaskStatus status;
     private TaskPriority priority;
     private UUID creatorId;
-    private UUID approverId;
-    private UUID teamLeaderId;
     private Set<UUID> assigneeIds;
     private LocalDateTime dueDate;
     private List<AttachmentDto> attachments;
+    private List<TaskProgressEntryDto> progressEntries;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,18 +39,22 @@ public class TaskDto {
                 ? task.getAttachments().stream().map(AttachmentDto::fromEntity).toList()
                 : List.of();
 
+        List<TaskProgressEntryDto> progressDtos = task.getProgressEntries() != null
+                ? task.getProgressEntries().stream().map(TaskProgressEntryDto::fromEntity).toList()
+                : List.of();
+
         return TaskDto.builder()
                 .id(task.getId())
                 .title(task.getTitle())
                 .description(task.getDescription())
+                .team(task.getTeam())
                 .status(task.getStatus())
                 .priority(task.getPriority())
                 .creatorId(task.getCreatorId())
-                .approverId(task.getApproverId())
-                .teamLeaderId(task.getTeamLeaderId())
                 .assigneeIds(task.getAssigneeIds())
                 .dueDate(task.getDueDate())
                 .attachments(attachmentDtos)
+                .progressEntries(progressDtos)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

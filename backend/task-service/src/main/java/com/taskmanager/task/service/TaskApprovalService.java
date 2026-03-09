@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -34,9 +35,16 @@ public class TaskApprovalService {
     private final TaskKafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-    public Page<TaskApprovalRequestDto> getPendingRequests(Pageable pageable) {
-        return approvalRequestRepository.findByStatus(ApprovalStatus.PENDING, pageable)
-                .map(TaskApprovalRequestDto::fromEntity);
+    public Page<TaskApprovalRequestDto> getPendingRequests(Set<String> reviewerTeams,
+                                                            boolean isSuperAdmin, Pageable pageable) {
+        Page<TaskApprovalRequest> requests = approvalRequestRepository
+                .findByStatus(ApprovalStatus.PENDING, pageable);
+
+        if (isSuperAdmin) {
+            return requests.map(TaskApprovalRequestDto::fromEntity);
+        }
+
+        return requests.map(TaskApprovalRequestDto::fromEntity);
     }
 
     public Page<TaskApprovalRequestDto> getMyRequests(UUID userId, Pageable pageable) {
@@ -44,7 +52,12 @@ public class TaskApprovalService {
                 .map(TaskApprovalRequestDto::fromEntity);
     }
 
-    public Page<TaskApprovalRequestDto> getAllRequests(Pageable pageable) {
+    public Page<TaskApprovalRequestDto> getAllRequests(Set<String> reviewerTeams,
+                                                       boolean isSuperAdmin, Pageable pageable) {
+        if (isSuperAdmin) {
+            return approvalRequestRepository.findAll(pageable)
+                    .map(TaskApprovalRequestDto::fromEntity);
+        }
         return approvalRequestRepository.findAll(pageable)
                 .map(TaskApprovalRequestDto::fromEntity);
     }
@@ -55,7 +68,6 @@ public class TaskApprovalService {
         TaskApprovalRequest request = approvalRequestRepository.findById(requestId)
                 .orElseThrow(() -> new TaskException("Approval request not found", HttpStatus.NOT_FOUND));
 
-        // don't let someone review the same request twice
         if (request.getStatus() != ApprovalStatus.PENDING) {
             throw new TaskException("This request has already been reviewed", HttpStatus.BAD_REQUEST);
         }
@@ -65,7 +77,6 @@ public class TaskApprovalService {
         request.setReviewedByUsername(reviewerUsername);
         request.setReviewNote(review.getReviewNote());
 
-        // if approved, actually execute the operation right away
         if (review.getStatus() == ApprovalStatus.APPROVED) {
             executeApprovedRequest(request, reviewerId);
         }
@@ -78,29 +89,25 @@ public class TaskApprovalService {
         return TaskApprovalRequestDto.fromEntity(request);
     }
 
-    // route to the right handler based on what kind of request was approved
-    private void executeApprovedRequest(TaskApprovalRequest request, UUID approverId) {
+    private void executeApprovedRequest(TaskApprovalRequest request, UUID reviewerId) {
         switch (request.getRequestType()) {
-            case CREATE -> executeCreateTask(request, approverId);
+            case CREATE -> executeCreateTask(request);
             case UPDATE -> executeUpdateTask(request);
-            case DELETE -> executeDeleteTask(request);
-            case ASSIGN -> executeAssignTask(request);
+            case COMPLETION -> executeCompleteTask(request);
         }
     }
 
-    // deserialize the stored json back into a CreateTaskRequest and build the task
-    private void executeCreateTask(TaskApprovalRequest request, UUID approverId) {
+    private void executeCreateTask(TaskApprovalRequest request) {
         try {
             CreateTaskRequest createRequest = objectMapper.readValue(request.getRequestData(), CreateTaskRequest.class);
 
             Task task = Task.builder()
                     .title(createRequest.getTitle())
                     .description(createRequest.getDescription())
+                    .team(createRequest.getTeam())
                     .priority(createRequest.getPriority() != null ? createRequest.getPriority() : TaskPriority.MEDIUM)
-                    .status(TaskStatus.APPROVED)
+                    .status(TaskStatus.ACTIVE)
                     .creatorId(request.getRequesterId())
-                    .approverId(approverId)
-                    .teamLeaderId(createRequest.getTeamLeaderId())
                     .assigneeIds(createRequest.getAssigneeIds() != null ? createRequest.getAssigneeIds() : new HashSet<>())
                     .dueDate(createRequest.getDueDate())
                     .build();
@@ -133,37 +140,17 @@ public class TaskApprovalService {
         }
     }
 
-    // try to clean up attachments before deleting - if one fails, keep going
-    private void executeDeleteTask(TaskApprovalRequest request) {
+    private void executeCompleteTask(TaskApprovalRequest request) {
         Task task = taskService.getTaskEntity(request.getTaskId());
 
-        for (Attachment attachment : task.getAttachments()) {
-            try {
-                taskService.deleteAttachment(attachment.getId(), request.getRequesterId(), true);
-            } catch (Exception e) {
-                log.warn("Failed to delete attachment {} during task deletion: {}", attachment.getId(), e.getMessage());
-            }
+        if (task.getStatus() != TaskStatus.ACTIVE && task.getStatus() != TaskStatus.PENDING) {
+            throw new TaskException("Only ACTIVE or PENDING tasks can be completed", HttpStatus.BAD_REQUEST);
         }
 
-        taskRepository.delete(task);
-        log.info("Task deleted via approval: taskId={}, requestId={}", request.getTaskId(), request.getId());
-        kafkaProducer.sendTaskDeleted(task);
-    }
+        task.setStatus(TaskStatus.COMPLETED);
+        task = taskRepository.save(task);
 
-    private void executeAssignTask(TaskApprovalRequest request) {
-        try {
-            AssignTaskRequest assignRequest = objectMapper.readValue(request.getRequestData(), AssignTaskRequest.class);
-            Task task = taskService.getTaskEntity(request.getTaskId());
-            task.setAssigneeIds(assignRequest.getAssigneeIds());
-            task = taskRepository.save(task);
-
-            log.info("Task assigned via approval: taskId={}, requestId={}", task.getId(), request.getId());
-            kafkaProducer.sendTaskAssigned(task);
-        } catch (TaskException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Failed to execute approved ASSIGN request: {}", e.getMessage());
-            throw new TaskException("Failed to assign task from approved request", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        log.info("Task completed via approval: taskId={}, requestId={}", task.getId(), request.getId());
+        kafkaProducer.sendTaskUpdated(task);
     }
 }

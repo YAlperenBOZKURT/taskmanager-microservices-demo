@@ -46,8 +46,11 @@ public class User {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_teams", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "team")
-    private String team;
+    @Builder.Default
+    private Set<String> teams = new HashSet<>();
 
     @Column(nullable = false)
     @Builder.Default
