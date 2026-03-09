@@ -1,6 +1,5 @@
 /**
  * Enables async method execution - mainly used by EmailService to send emails in background
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.config;
 

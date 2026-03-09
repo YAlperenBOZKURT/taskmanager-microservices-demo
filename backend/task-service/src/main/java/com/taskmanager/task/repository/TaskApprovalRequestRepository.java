@@ -1,6 +1,5 @@
 /**
  * Repo for approval requests - handles all the pending/approved/rejected queries.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.repository;
 

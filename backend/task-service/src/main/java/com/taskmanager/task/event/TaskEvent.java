@@ -1,6 +1,5 @@
 /**
  * Kafka event payload for task lifecycle events (created, updated, deleted, etc).
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.event;
 

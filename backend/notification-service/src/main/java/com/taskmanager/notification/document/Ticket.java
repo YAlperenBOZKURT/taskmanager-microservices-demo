@@ -1,6 +1,5 @@
 /**
  * MongoDB document for support tickets between users
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.document;
 

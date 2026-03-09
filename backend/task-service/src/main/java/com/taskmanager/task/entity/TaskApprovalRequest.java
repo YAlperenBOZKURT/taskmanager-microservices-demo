@@ -1,6 +1,5 @@
 /**
  * Stores approval requests - when regular users want to create/update/delete tasks.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.entity;
 

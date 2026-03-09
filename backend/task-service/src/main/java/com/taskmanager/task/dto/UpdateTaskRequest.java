@@ -1,7 +1,6 @@
 /**
  * DTO for updating an existing task - all fields are optional so you can partial update.
  * Status changes are handled via dedicated endpoints (mark-pending/approve-completion).
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

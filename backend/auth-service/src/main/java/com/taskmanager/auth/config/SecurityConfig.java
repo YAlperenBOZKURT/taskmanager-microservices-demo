@@ -1,6 +1,5 @@
 /**
  * Spring Security configuration - sets up JWT filter, endpoint permissions, password encoder
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.config;
 

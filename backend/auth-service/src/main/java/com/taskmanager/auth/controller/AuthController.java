@@ -1,6 +1,5 @@
 /**
  * REST endpoints for auth operations - login, register, logout, password reset
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.controller;
 

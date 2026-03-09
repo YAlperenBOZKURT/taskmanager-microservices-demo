@@ -1,6 +1,5 @@
 /**
  * Custom exception for auth-related errors with HTTP status
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.exception;
 

@@ -1,7 +1,6 @@
 /**
  * Handles ticket creation, retrieval, and status management.
  * Enforces permission rules based on sender role and team membership.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.service;
 

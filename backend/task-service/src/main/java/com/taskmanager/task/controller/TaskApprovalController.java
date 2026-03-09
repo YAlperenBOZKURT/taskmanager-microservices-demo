@@ -1,7 +1,6 @@
 /**
  * Endpoints for the approval workflow - admins can see pending requests,
  * review them, and regular users can check their own request status.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.controller;
 

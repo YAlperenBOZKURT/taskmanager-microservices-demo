@@ -1,6 +1,5 @@
 /**
  * MinIO client bean config - reads connection details from application properties.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.config;
 

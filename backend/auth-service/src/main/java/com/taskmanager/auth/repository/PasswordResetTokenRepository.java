@@ -1,6 +1,5 @@
 /**
  * Repository for password reset tokens
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.repository;
 

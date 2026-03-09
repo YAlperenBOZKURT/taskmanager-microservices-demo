@@ -1,6 +1,5 @@
 /**
  * DTO for user data - keeps the password out of API responses
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

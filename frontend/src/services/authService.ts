@@ -1,5 +1,4 @@
 // TaskManager Frontend - Authentication service (login, logout, profile)
-// Author: Yusuf Alperen Bozkurt
 
 import api from './api';
 import type { AuthResponse } from '../types';

@@ -1,6 +1,5 @@
 /**
  * Token entity for password reset flow - stored in db with expiry
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.entity;
 

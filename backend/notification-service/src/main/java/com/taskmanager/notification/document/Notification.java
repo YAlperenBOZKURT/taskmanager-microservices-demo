@@ -1,6 +1,5 @@
 /**
  * MongoDB document for notifications - stores everything we need to show and track a notification
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.document;
 

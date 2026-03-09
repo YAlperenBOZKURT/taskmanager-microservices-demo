@@ -1,7 +1,6 @@
 /**
  * Creates/updates default users on startup for testing.
  * Ensures teams and users exist with correct roles.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.config;
 

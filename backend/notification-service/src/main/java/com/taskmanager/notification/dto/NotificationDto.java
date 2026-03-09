@@ -1,6 +1,5 @@
 /**
  * DTO for sending notification data to the frontend
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.dto;
 

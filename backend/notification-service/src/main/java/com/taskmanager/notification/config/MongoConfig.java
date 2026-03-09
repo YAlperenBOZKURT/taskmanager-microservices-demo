@@ -1,6 +1,5 @@
 /**
  * MongoDB config - enables auditing so createdAt fields get auto-populated
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.config;
 

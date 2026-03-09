@@ -1,5 +1,4 @@
 # Task Service config
-# Yusuf Alperen Bozkurt
 
 server:
   port: 8082
@@ -71,4 +70,4 @@ management:
 logging:
   level:
     root: INFO
-    com.taskmanager.task: DEBUG
+    com.taskmanager.task: INFO

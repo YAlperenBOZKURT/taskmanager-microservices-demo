@@ -1,5 +1,4 @@
 // TaskManager Frontend - Approvals page for reviewing task approval requests
-// Author: Yusuf Alperen Bozkurt
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';

@@ -1,6 +1,5 @@
 /**
  * Redis caching setup - caches expire after 30 min, serialized as JSON.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.config;
 

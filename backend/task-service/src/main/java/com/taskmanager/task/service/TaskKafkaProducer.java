@@ -1,7 +1,6 @@
 /**
  * Publishes task-related events to Kafka topics so other services
  * (like notifications) can react to changes.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.service;
 

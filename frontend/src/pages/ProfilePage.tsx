@@ -1,5 +1,4 @@
 // TaskManager Frontend - User profile page with edit and password change
-// Author: Yusuf Alperen Bozkurt
 
 import { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';

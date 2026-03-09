@@ -1,6 +1,5 @@
 /**
  * Redis-based token storage - handles refresh tokens and blacklisting access tokens
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.security;
 

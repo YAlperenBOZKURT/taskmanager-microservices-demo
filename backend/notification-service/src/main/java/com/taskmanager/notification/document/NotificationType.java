@@ -1,6 +1,5 @@
 /**
  * All the different kinds of notifications we can send
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.document;
 

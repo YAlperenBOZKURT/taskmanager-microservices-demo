@@ -1,6 +1,5 @@
 /**
  * Event model for task lifecycle messages from task-service
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.event;
 

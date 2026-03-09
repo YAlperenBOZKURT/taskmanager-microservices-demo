@@ -1,6 +1,5 @@
 /**
  * Handles user management operations - profile, password changes, role assignments, etc.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.service;
 

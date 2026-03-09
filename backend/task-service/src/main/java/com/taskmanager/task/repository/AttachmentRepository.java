@@ -1,6 +1,5 @@
 /**
  * Simple repo for attachment metadata lookups.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.repository;
 

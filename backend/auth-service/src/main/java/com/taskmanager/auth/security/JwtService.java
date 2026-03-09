@@ -1,6 +1,5 @@
 /**
  * JWT utility class - generates, validates, and parses JWT tokens
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.security;
 

@@ -1,5 +1,4 @@
 // TaskManager Frontend - Main layout wrapper with sidebar and topbar
-// Author: Yusuf Alperen Bozkurt
 
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';

@@ -1,7 +1,6 @@
 /**
  * Reads user info (id, username, roles) from headers that the API gateway
  * sets after validating the JWT. This way we don't need to validate tokens here.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.config;
 

@@ -1,5 +1,4 @@
 // TaskManager Frontend - Global auth state management with Zustand
-// Author: Yusuf Alperen Bozkurt
 
 import { create } from 'zustand';
 import type { User } from '../types';

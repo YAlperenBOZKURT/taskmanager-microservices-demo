@@ -1,6 +1,5 @@
 /**
  * Repository for profile change approval requests
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.repository;
 

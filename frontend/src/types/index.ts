@@ -1,5 +1,4 @@
 // TaskManager Frontend - TypeScript type definitions and interfaces
-// Author: Yusuf Alperen Bozkurt
 
 export enum Role {
   ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN',

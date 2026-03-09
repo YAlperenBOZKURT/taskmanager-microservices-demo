@@ -1,6 +1,5 @@
 /**
  * Core notification logic - creates notifications, sends emails, and handles read/unread state
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.service;
 

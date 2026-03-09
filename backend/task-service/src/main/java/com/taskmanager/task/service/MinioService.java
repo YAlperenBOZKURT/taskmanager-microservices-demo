@@ -1,7 +1,6 @@
 /**
  * Handles file uploads/downloads to MinIO (our S3-compatible object storage).
  * Validates file types and sizes before uploading.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.service;
 

@@ -1,6 +1,5 @@
 /**
  * Request body for assigning users to a task.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

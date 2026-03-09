@@ -1,5 +1,4 @@
 // TaskManager Frontend - User service for admin user management
-// Author: Yusuf Alperen Bozkurt
 
 import api from './api';
 import type { User, PageResponse } from '../types';

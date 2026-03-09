@@ -1,6 +1,5 @@
 /**
  * User entity - maps to the users table in the database
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.entity;
 

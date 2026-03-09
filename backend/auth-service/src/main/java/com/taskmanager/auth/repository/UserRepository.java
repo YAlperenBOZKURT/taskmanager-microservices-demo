@@ -1,6 +1,5 @@
 /**
  * User repository - Spring Data JPA handles the query generation
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.repository;
 

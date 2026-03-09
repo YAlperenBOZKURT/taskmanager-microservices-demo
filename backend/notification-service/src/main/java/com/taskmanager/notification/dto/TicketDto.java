@@ -1,6 +1,5 @@
 /**
  * DTO for ticket responses - keeps internal mongo fields out of the API
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.dto;
 

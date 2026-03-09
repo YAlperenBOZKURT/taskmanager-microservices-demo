@@ -1,6 +1,5 @@
 /**
  * Catches all exceptions and returns clean JSON error responses
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.exception;
 

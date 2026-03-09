@@ -1,6 +1,5 @@
 /**
  * Kafka topic configuration - defines topics for user events
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.config;
 

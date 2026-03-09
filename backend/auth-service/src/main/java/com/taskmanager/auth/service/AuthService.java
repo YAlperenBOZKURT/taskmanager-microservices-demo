@@ -1,6 +1,5 @@
 /**
  * Handles all the core auth stuff - registration, login, token refresh, logout
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.service;
 

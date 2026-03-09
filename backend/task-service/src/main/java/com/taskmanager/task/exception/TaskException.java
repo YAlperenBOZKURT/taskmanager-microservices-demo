@@ -1,6 +1,5 @@
 /**
  * Custom exception for task-related errors - carries an HTTP status code.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.exception;
 

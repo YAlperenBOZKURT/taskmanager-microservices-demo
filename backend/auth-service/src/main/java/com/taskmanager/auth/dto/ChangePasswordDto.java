@@ -1,6 +1,5 @@
 /**
  * DTO for changing password - needs current and new password
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

@@ -1,6 +1,5 @@
 /**
  * Request body for user registration
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

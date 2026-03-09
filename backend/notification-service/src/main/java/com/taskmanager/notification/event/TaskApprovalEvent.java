@@ -1,6 +1,5 @@
 /**
  * Event model for task approval workflow messages (request/review)
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.event;
 

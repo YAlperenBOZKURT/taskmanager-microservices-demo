@@ -1,6 +1,5 @@
 /**
  * Main entry point for the auth service - kicks off the Spring Boot app
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth;
 

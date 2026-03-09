@@ -1,7 +1,6 @@
 /**
  * Separate controller just for downloading attachments - streams files
  * directly from MinIO to the client.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.controller;
 

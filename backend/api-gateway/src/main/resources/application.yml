@@ -1,5 +1,4 @@
 # API Gateway config
-# Yusuf Alperen Bozkurt
 
 server:
   port: 8080
@@ -100,5 +99,5 @@ management:
 logging:
   level:
     root: INFO
-    com.taskmanager.gateway: DEBUG
-    org.springframework.cloud.gateway: DEBUG
+    com.taskmanager.gateway: INFO
+    org.springframework.cloud.gateway: WARN

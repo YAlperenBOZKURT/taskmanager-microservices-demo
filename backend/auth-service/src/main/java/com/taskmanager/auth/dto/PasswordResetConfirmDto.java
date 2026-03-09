@@ -1,6 +1,5 @@
 /**
  * DTO for confirming a password reset with the token and new password
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

@@ -1,6 +1,5 @@
 /**
  * Main entry point for the task service - kicks off the Spring Boot app.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task;
 

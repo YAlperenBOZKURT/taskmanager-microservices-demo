@@ -1,6 +1,5 @@
 /**
  * Request body for when an admin reviews (approves/rejects) a pending request.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

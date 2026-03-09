@@ -1,5 +1,4 @@
 // TaskManager Frontend - Ticket creation modal for sending support tickets
-// Author: Yusuf Alperen Bozkurt
 
 import { useState, useEffect } from 'react';
 import { HiOutlineXMark } from 'react-icons/hi2';

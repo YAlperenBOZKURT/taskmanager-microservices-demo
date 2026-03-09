@@ -1,6 +1,5 @@
 /**
  * Response DTO for tasks - maps from the Task entity to what we send to clients.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

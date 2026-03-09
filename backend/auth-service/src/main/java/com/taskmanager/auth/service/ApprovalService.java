@@ -1,6 +1,5 @@
 /**
  * Approval workflow for user profile changes - users request, admins approve/reject
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.service;
 

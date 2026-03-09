@@ -1,5 +1,4 @@
 // TaskManager Frontend - Notification service for fetching and managing notifications
-// Author: Yusuf Alperen Bozkurt
 
 import api from './api';
 import type { NotificationDto, PageResponse } from '../types';

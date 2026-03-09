@@ -1,6 +1,5 @@
 /**
  * Mongo repo for tickets - query methods for sender/recipient lookups
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.repository;
 

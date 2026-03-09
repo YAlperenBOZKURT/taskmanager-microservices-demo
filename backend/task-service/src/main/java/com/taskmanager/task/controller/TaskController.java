@@ -1,7 +1,6 @@
 /**
  * REST controller for all task operations - routes requests based on
  * user role (admin vs regular user) to either direct ops or approval flow.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.controller;
 

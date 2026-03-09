@@ -1,5 +1,4 @@
 # Auth Service config
-# Yusuf Alperen Bozkurt
 
 server:
   port: 8081
@@ -65,4 +64,4 @@ management:
 logging:
   level:
     root: INFO
-    com.taskmanager.auth: DEBUG
+    com.taskmanager.auth: INFO

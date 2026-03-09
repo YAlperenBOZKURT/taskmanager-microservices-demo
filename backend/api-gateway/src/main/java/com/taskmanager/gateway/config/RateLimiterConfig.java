@@ -1,7 +1,6 @@
 /**
  * Rate limiter configuration for the gateway - uses client IP to track requests.
  * Works with Redis under the hood to count how many requests each IP is making.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.gateway.config;
 

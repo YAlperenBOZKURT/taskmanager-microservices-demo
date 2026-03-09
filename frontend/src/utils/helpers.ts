@@ -1,5 +1,4 @@
 // TaskManager Frontend - Helper/utility functions for formatting and display
-// Author: Yusuf Alperen Bozkurt
 
 import { Role } from '../types';
 

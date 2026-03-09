@@ -2,7 +2,6 @@
  * JWT validation filter that checks every incoming request for a valid token.
  * Public endpoints like login and refresh are skipped. If the token is valid,
  * we extract user info and pass it downstream via headers so other services know who's calling.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.gateway.filter;
 

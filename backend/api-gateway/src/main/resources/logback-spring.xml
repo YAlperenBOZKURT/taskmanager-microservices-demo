@@ -25,10 +25,14 @@
     </appender>
 
     <springProfile name="docker">
+        <!-- Docker: CONSOLE only WARN+ to minimize json-log file growth -->
         <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
             <appender-ref ref="LOGSTASH"/>
         </root>
+        <logger name="com.taskmanager.gateway" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOGSTASH"/>
+        </logger>
     </springProfile>
 
     <springProfile name="!docker">

@@ -1,6 +1,5 @@
 /**
  * Loads user details from the database for Spring Security authentication
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.security;
 

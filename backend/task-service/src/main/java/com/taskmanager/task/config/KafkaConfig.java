@@ -1,6 +1,5 @@
 /**
  * Kafka topic definitions - 3 partitions each, single replica (good enough for dev).
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.config;
 

@@ -1,6 +1,5 @@
 /**
  * Event model for user-related kafka messages from auth-service
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.event;
 

@@ -1,5 +1,4 @@
 // TaskManager Frontend - Sidebar open/close state with Zustand
-// Author: Yusuf Alperen Bozkurt
 
 import { create } from 'zustand';
 

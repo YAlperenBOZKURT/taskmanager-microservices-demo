@@ -1,6 +1,5 @@
 /**
  * JPA repo for tasks - Spring Data does the heavy lifting here.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.repository;
 

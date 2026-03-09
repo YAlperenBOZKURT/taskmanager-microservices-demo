@@ -1,6 +1,5 @@
 /**
  * DTO for submitting a profile change approval request
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

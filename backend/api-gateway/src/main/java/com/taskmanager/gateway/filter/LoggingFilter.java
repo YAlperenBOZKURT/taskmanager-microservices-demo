@@ -1,7 +1,6 @@
 /**
  * Simple logging filter that logs every request and response going through the gateway.
  * Runs first in the filter chain so we can see everything thats happening.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.gateway.filter;
 

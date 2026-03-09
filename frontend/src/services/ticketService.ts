@@ -1,5 +1,4 @@
 // TaskManager Frontend - Ticket service for support ticket operations
-// Author: Yusuf Alperen Bozkurt
 
 import api from './api';
 import type { TicketDto, PageResponse } from '../types';

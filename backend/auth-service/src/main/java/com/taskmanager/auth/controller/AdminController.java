@@ -1,6 +1,5 @@
 /**
  * Admin-only endpoints - user management, role assignment, approval reviews
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.controller;
 

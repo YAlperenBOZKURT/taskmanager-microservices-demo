@@ -1,6 +1,5 @@
 /**
  * Mongo repo for notifications - Spring Data does the heavy lifting here
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.repository;
 

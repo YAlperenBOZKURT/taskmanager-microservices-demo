@@ -1,6 +1,5 @@
 /**
  * DTO for attachment info - file name, size, content type, etc.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

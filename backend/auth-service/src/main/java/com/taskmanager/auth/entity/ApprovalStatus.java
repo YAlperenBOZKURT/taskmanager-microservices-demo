@@ -1,6 +1,5 @@
 /**
  * Status enum for approval requests
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.entity;
 

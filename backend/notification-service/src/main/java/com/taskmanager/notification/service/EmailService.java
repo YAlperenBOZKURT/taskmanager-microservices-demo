@@ -1,6 +1,5 @@
 /**
  * Async email sender - wraps JavaMailSender with a toggle to disable emails in dev
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.service;
 

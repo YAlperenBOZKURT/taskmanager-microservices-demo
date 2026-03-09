@@ -1,5 +1,4 @@
 // TaskManager Frontend - Axios API client setup with interceptors
-// Author: Yusuf Alperen Bozkurt
 
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';

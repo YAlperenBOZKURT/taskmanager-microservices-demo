@@ -1,6 +1,5 @@
 /**
  * REST endpoints for notifications - get, read, mark as read, etc.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.controller;
 

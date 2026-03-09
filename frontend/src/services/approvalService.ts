@@ -1,5 +1,4 @@
 // TaskManager Frontend - Approval service for task approval workflows
-// Author: Yusuf Alperen Bozkurt
 
 import api from './api';
 import type { TaskApprovalRequestDto, PageResponse } from '../types';

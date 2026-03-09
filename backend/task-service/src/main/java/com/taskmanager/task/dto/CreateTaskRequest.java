@@ -1,6 +1,5 @@
 /**
  * DTO for creating a new task - validates the basics like title length.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

@@ -1,7 +1,6 @@
 /**
  * Catches exceptions globally and returns clean error responses.
  * Keeps the controllers free from try-catch clutter.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.exception;
 

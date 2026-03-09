@@ -1,6 +1,5 @@
 /**
  * Password reset flow - generates tokens and handles the actual reset
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.service;
 

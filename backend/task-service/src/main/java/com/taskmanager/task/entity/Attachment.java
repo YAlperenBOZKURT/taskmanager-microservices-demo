@@ -1,6 +1,5 @@
 /**
  * File attachment entity - metadata for files stored in MinIO.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.entity;
 

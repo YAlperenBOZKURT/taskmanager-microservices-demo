@@ -1,6 +1,5 @@
 /**
  * Entity for profile change requests that need admin approval
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.entity;
 

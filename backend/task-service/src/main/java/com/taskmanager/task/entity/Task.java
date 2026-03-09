@@ -1,6 +1,5 @@
 /**
  * Main task entity - this is where all the task data lives in the DB.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.entity;
 

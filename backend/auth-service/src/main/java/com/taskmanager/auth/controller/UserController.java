@@ -1,6 +1,5 @@
 /**
  * Endpoints for regular users - profile, password change, approval requests
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.controller;
 

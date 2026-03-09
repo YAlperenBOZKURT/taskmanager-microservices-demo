@@ -4,7 +4,6 @@
  *   USER  → same team users/admins + any super admin
  *   ADMIN → same team users/admins + any super admin
  *   SUPER_ADMIN → anyone
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.controller;
 

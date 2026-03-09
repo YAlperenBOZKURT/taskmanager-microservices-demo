@@ -1,6 +1,5 @@
 /**
  * Catches exceptions globally and returns clean error responses instead of stack traces
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.exception;
 

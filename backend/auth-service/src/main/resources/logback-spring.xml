@@ -26,9 +26,12 @@
 
     <springProfile name="docker">
         <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
             <appender-ref ref="LOGSTASH"/>
         </root>
+        <logger name="com.taskmanager.auth" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOGSTASH"/>
+        </logger>
     </springProfile>
 
     <springProfile name="!docker">

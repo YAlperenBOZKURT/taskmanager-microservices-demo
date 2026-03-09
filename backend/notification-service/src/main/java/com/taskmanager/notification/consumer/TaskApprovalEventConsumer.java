@@ -1,7 +1,6 @@
 /**
  * Handles approval workflow events - notifies admins about new requests
  * and users about approval/rejection decisions
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.consumer;
 

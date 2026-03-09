@@ -1,7 +1,6 @@
 /**
  * Main entry point for the API Gateway service.
  * This is basically the front door - all requests hit here first before going to other microservices.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.gateway;
 

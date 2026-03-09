@@ -1,6 +1,5 @@
 /**
  * Listens for user-related kafka events (registration, profile updates) and sends notifications
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.consumer;
 

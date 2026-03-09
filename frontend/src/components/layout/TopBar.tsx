@@ -1,5 +1,4 @@
 // TaskManager Frontend - Top bar with page title, notifications and logout
-// Author: Yusuf Alperen Bozkurt
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';

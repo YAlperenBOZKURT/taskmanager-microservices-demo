@@ -1,6 +1,5 @@
 /**
  * DTO for approval requests - shows users the status of their pending requests.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.dto;
 

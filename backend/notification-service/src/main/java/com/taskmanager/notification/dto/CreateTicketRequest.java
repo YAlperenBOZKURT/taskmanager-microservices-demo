@@ -1,6 +1,5 @@
 /**
  * Request body for creating a new support ticket
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.dto;
 

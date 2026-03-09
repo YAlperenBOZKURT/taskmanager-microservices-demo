@@ -1,6 +1,5 @@
 /**
  * Response object returned after successful login/refresh with tokens and user info
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

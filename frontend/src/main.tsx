@@ -1,5 +1,4 @@
 // TaskManager Frontend - Application entry point
-// Author: Yusuf Alperen Bozkurt
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

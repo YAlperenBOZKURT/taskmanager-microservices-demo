@@ -1,7 +1,6 @@
 /**
  * Handles the approval workflow - admins review requests from regular users
  * and either approve or reject them. Approved requests get executed automatically.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.service;
 

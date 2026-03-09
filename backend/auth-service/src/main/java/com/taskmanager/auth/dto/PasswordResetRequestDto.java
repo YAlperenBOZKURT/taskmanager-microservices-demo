@@ -1,6 +1,5 @@
 /**
  * DTO for requesting a password reset - just needs the email
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

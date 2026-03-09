@@ -1,7 +1,6 @@
 /**
  * Picks up task lifecycle events from kafka and notifies relevant users
  * (creator, assignees)
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.consumer;
 

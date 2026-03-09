@@ -6,13 +6,19 @@
 The backend has been updated to work on a team-based structure.  
 The integration of the changes into the frontend was carried out with AI assistance.
 
+Docker logging fix:
+- Added `x-logging` anchor in `docker-compose.yml` — each container is now limited to max 50MB of logs (5 files × 10MB).
+- Applied the logging limit to all 15 services.
+- Reduced Spring Boot log levels from DEBUG to INFO for production (docker profile).
+- Optimized `logback-spring.xml` files: root logs go only to Logstash in docker profile, reducing Docker JSON log growth.
+- Removed unnecessary author comments added by AI from source files.
+
 Missing:
 - Notification system is not working correctly.
   - ADMIN_BROADCAST notifications are not reaching admin users; separate notifications need to be created for each admin.
   - Ticket system: teamIds field is saved to the ticket but notifications are not sent to team members.
   - Ticket system: Permission checks based on sender role and team membership are missing.
 - There are some missing parts on the UI side.
-- Logging system is not working as expected.
 - Some dashboard cards on the frontend are not clickable (ticket cards, request results, etc.).
 - In Task Service, team access control for user requests (requestCreateTask, requestUpdateTask, requestCompleteTask) is not enforced on the backend side; the check exists on the frontend but is missing on the backend.
 
@@ -28,13 +34,19 @@ Missing:
 Backend takım bazlı çalışacak şekilde güncellendi.  
 Yapılan değişikliklerin frontend tarafına entegrasyonu yapay zeka desteği ile gerçekleştirildi.
 
+Docker log düzeltmesi:
+- `docker-compose.yml`'e `x-logging` anchor eklendi — her konteyner maksimum 50MB log tutabilir (5 dosya × 10MB).
+- 15 servisin tamamına log boyut limiti uygulandı.
+- Spring Boot log seviyeleri production (docker profili) için DEBUG'dan INFO'ya düşürüldü.
+- `logback-spring.xml` dosyaları optimize edildi: docker profilinde root loglar sadece Logstash'e gider, Docker JSON log büyümesi azaltıldı.
+- Yapay zekanın koyduğu gereksiz author yorumları kaynak dosyalardan silindi.
+
 Eksikler:
 - Bildirim sistemi doğru çalışmıyor.
   - ADMIN_BROADCAST bildirimleri admin kullanıcılara ulaşmıyor; her admin için ayrı bildirim oluşturulması gerekiyor.
   - Ticket sistemi: teamIds alanı ticket'a yazılıyor ancak takım üyelerine bildirim gönderilmiyor.
   - Ticket sistemi: Gönderen rolü ve takım üyeliği bazlı izin kontrolü eksik.
 - UI tarafında bazı eksiklikler bulunuyor.
-- Loglama sistemi beklenildiği gibi çalışmıyor.
 - Frontend'te dashboard kartlarının bir kısmı tıklanabilir değil (ticket kartları, talep sonuçları vb.).
 - Task Service'te kullanıcı taleplerinde (requestCreateTask, requestUpdateTask, requestCompleteTask) takım erişim kontrolü backend tarafında yapılmıyor; frontend tarafında kontrol mevcut ancak backend'de eksik.
 

@@ -1,7 +1,6 @@
 /**
  * Security config - we don't use sessions since the API gateway handles auth.
  * Requests come in with user info in headers set by the gateway.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.config;
 

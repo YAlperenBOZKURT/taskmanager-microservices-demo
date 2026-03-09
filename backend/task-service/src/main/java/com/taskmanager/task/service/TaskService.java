@@ -1,7 +1,6 @@
 /**
  * Core task service - handles all task CRUD operations. Admins can do things
  * directly, regular users go through the approval flow.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.service;
 

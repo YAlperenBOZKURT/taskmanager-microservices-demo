@@ -1,6 +1,5 @@
 /**
  * Kafka setup and all the topic names we listen to in one place
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification.config;
 

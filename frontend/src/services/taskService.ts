@@ -1,5 +1,4 @@
 // TaskManager Frontend - Task service for CRUD operations on tasks
-// Author: Yusuf Alperen Bozkurt
 
 import api from './api';
 import type { TaskDto, AttachmentDto, TaskProgressEntryDto, PageResponse } from '../types';

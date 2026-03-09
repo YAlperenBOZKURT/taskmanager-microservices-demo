@@ -1,6 +1,5 @@
 /**
  * JWT filter that runs on every request - extracts and validates the token from the Authorization header
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.security;
 

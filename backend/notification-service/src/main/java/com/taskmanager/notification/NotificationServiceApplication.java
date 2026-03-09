@@ -1,6 +1,5 @@
 /**
  * Main entry point for the notification microservice - fires up Spring Boot
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.notification;
 

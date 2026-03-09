@@ -1,6 +1,5 @@
 /**
  * DTO for admin reviewing an approval request - approve or reject
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.dto;
 

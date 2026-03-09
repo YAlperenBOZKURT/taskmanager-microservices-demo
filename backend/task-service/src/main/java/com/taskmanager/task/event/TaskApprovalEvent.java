@@ -1,6 +1,5 @@
 /**
  * Kafka event payload for approval workflow events.
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.task.event;
 

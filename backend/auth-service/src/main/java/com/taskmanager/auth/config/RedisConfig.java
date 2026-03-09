@@ -1,6 +1,5 @@
 /**
  * Redis template setup with JSON serialization for storing tokens
- * @author Yusuf Alperen Bozkurt
  */
 package com.taskmanager.auth.config;
 

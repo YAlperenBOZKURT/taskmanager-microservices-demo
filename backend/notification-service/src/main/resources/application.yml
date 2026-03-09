@@ -1,5 +1,4 @@
 # Notification Service config
-# Yusuf Alperen Bozkurt
 
 server:
   port: 8083
