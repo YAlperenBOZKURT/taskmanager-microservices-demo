@@ -7,7 +7,7 @@ package com.taskmanager.notification.consumer;
 import com.taskmanager.notification.config.KafkaConfig;
 import com.taskmanager.notification.document.NotificationType;
 import com.taskmanager.notification.event.TaskEvent;
-import com.taskmanager.notification.service.NotificationService;
+import com.taskmanager.notification.service.INotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,7 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskEventConsumer {
 
-    private final NotificationService notificationService;
+    private final INotificationService notificationService;
 
     @KafkaListener(topics = KafkaConfig.TASK_CREATED_TOPIC, groupId = "notification-service-group")
     public void handleTaskCreated(TaskEvent event) {

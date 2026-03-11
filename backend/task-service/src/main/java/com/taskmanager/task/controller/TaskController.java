@@ -6,7 +6,9 @@ package com.taskmanager.task.controller;
 
 import com.taskmanager.task.dto.*;
 import com.taskmanager.task.entity.TaskStatus;
-import com.taskmanager.task.service.TaskService;
+import com.taskmanager.task.service.ITaskService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,13 +27,15 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
+@Tag(name = "Tasks", description = "Task CRUD, status transitions, progress tracking and attachments")
 public class TaskController {
 
-    private final TaskService taskService;
+    private final ITaskService taskService;
 
     // ==================== Create ====================
 
     @PostMapping
+    @Operation(summary = "Create task", description = "Admin: creates directly, User: submits approval request")
     public ResponseEntity<?> createTask(@Valid @RequestBody CreateTaskRequest request,
                                         Authentication auth) {
         UUID userId = getUserId(auth);
@@ -49,6 +53,7 @@ public class TaskController {
     // ==================== Update ====================
 
     @PutMapping("/{taskId}")
+    @Operation(summary = "Update task", description = "Admin: updates directly, User: submits approval request")
     public ResponseEntity<?> updateTask(@PathVariable UUID taskId,
                                         @Valid @RequestBody UpdateTaskRequest request,
                                         Authentication auth) {
@@ -69,6 +74,7 @@ public class TaskController {
 
     @DeleteMapping("/{taskId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Delete task (Admin only)")
     public ResponseEntity<Void> deleteTask(@PathVariable UUID taskId, Authentication auth) {
         UUID userId = getUserId(auth);
         String username = auth.getName();
@@ -80,6 +86,7 @@ public class TaskController {
 
     @PostMapping("/{taskId}/assign")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Assign task to users (Admin only)")
     public ResponseEntity<TaskDto> assignTask(@PathVariable UUID taskId,
                                                @Valid @RequestBody AssignTaskRequest request,
                                                Authentication auth) {
@@ -93,6 +100,7 @@ public class TaskController {
     // ==================== Status Transitions ====================
 
     @PostMapping("/{taskId}/mark-pending")
+    @Operation(summary = "Mark task as pending")
     public ResponseEntity<TaskDto> markTaskPending(@PathVariable UUID taskId, Authentication auth) {
         UUID userId = getUserId(auth);
         String username = auth.getName();
@@ -103,6 +111,7 @@ public class TaskController {
 
     @PostMapping("/{taskId}/approve-completion")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Approve task completion (Admin only)")
     public ResponseEntity<TaskDto> approveCompletion(@PathVariable UUID taskId, Authentication auth) {
         UUID userId = getUserId(auth);
         String username = auth.getName();
@@ -112,6 +121,7 @@ public class TaskController {
     }
 
     @PostMapping("/{taskId}/complete")
+    @Operation(summary = "Complete task", description = "Admin: marks pending, User: submits completion request")
     public ResponseEntity<?> completeTask(@PathVariable UUID taskId,
                                           @RequestBody(required = false) Map<String, String> body,
                                           Authentication auth) {
@@ -133,6 +143,7 @@ public class TaskController {
     // ==================== Progress Entries ====================
 
     @PostMapping("/{taskId}/progress")
+    @Operation(summary = "Add progress entry to task")
     public ResponseEntity<TaskProgressEntryDto> addProgressEntry(
             @PathVariable UUID taskId,
             @RequestBody Map<String, String> body,
@@ -149,6 +160,7 @@ public class TaskController {
     }
 
     @GetMapping("/{taskId}/progress")
+    @Operation(summary = "Get task progress entries")
     public ResponseEntity<List<TaskProgressEntryDto>> getProgressEntries(@PathVariable UUID taskId) {
         return ResponseEntity.ok(taskService.getProgressEntries(taskId));
     }
@@ -156,12 +168,14 @@ public class TaskController {
     // ==================== Read ====================
 
     @GetMapping("/{taskId}")
+    @Operation(summary = "Get task by ID")
     public ResponseEntity<TaskDto> getTask(@PathVariable UUID taskId, Authentication auth) {
         TaskDto task = taskService.getTaskById(taskId, getUserTeams(auth), isSuperAdmin(auth));
         return ResponseEntity.ok(task);
     }
 
     @GetMapping
+    @Operation(summary = "List all tasks (team-filtered)")
     public ResponseEntity<Page<TaskDto>> getAllTasks(Authentication auth,
                                                      @PageableDefault(size = 20) Pageable pageable) {
         Page<TaskDto> tasks = taskService.getAllTasks(getUserTeams(auth), isSuperAdmin(auth), pageable);
@@ -169,6 +183,7 @@ public class TaskController {
     }
 
     @GetMapping("/my-tasks")
+    @Operation(summary = "Get tasks created by current user")
     public ResponseEntity<Page<TaskDto>> getMyTasks(Authentication auth,
                                                      @PageableDefault(size = 20) Pageable pageable) {
         UUID userId = getUserId(auth);
@@ -176,6 +191,7 @@ public class TaskController {
     }
 
     @GetMapping("/assigned-to-me")
+    @Operation(summary = "Get tasks assigned to current user")
     public ResponseEntity<Page<TaskDto>> getAssignedToMe(Authentication auth,
                                                           @PageableDefault(size = 20) Pageable pageable) {
         UUID userId = getUserId(auth);
@@ -183,6 +199,7 @@ public class TaskController {
     }
 
     @GetMapping("/by-status/{status}")
+    @Operation(summary = "Filter tasks by status")
     public ResponseEntity<Page<TaskDto>> getByStatus(@PathVariable TaskStatus status,
                                                       Authentication auth,
                                                       @PageableDefault(size = 20) Pageable pageable) {
@@ -192,6 +209,7 @@ public class TaskController {
     // ==================== Attachments ====================
 
     @PostMapping("/{taskId}/attachments")
+    @Operation(summary = "Upload attachment to task")
     public ResponseEntity<AttachmentDto> uploadAttachment(@PathVariable UUID taskId,
                                                            @RequestParam("file") MultipartFile file,
                                                            Authentication auth) {
@@ -201,11 +219,13 @@ public class TaskController {
     }
 
     @GetMapping("/{taskId}/attachments")
+    @Operation(summary = "List task attachments")
     public ResponseEntity<List<AttachmentDto>> getAttachments(@PathVariable UUID taskId) {
         return ResponseEntity.ok(taskService.getAttachments(taskId));
     }
 
     @DeleteMapping("/attachments/{attachmentId}")
+    @Operation(summary = "Delete attachment")
     public ResponseEntity<Void> deleteAttachment(@PathVariable UUID attachmentId,
                                                   Authentication auth) {
         UUID userId = getUserId(auth);

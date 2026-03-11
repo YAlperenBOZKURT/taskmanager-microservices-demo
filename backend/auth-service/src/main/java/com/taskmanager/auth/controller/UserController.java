@@ -5,8 +5,10 @@ package com.taskmanager.auth.controller;
 
 import com.taskmanager.auth.dto.*;
 import com.taskmanager.auth.entity.ApprovalRequest;
-import com.taskmanager.auth.service.ApprovalService;
-import com.taskmanager.auth.service.UserService;
+import com.taskmanager.auth.service.IApprovalService;
+import com.taskmanager.auth.service.IUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +26,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "User", description = "User profile, password and approval request operations")
 public class UserController {
 
-    private final UserService userService;
-    private final ApprovalService approvalService;
+    private final IUserService userService;
+    private final IApprovalService approvalService;
 
     @GetMapping("/me")
+    @Operation(summary = "Get current user profile")
     public ResponseEntity<UserDto> getCurrentUser(Authentication authentication) {
         log.info("GET /api/users/me - user: {}", authentication.getName());
         UserDto user = userService.getCurrentUser(authentication.getName());
@@ -37,6 +41,7 @@ public class UserController {
     }
 
     @PostMapping("/me/change-password")
+    @Operation(summary = "Change password", description = "Change current user's password")
     public ResponseEntity<Map<String, String>> changePassword(
             Authentication authentication,
             @Valid @RequestBody ChangePasswordDto dto) {
@@ -46,6 +51,7 @@ public class UserController {
     }
 
     @PostMapping("/me/approval-request")
+    @Operation(summary = "Submit profile change request", description = "Creates an approval request for profile changes")
     public ResponseEntity<Map<String, Object>> createApprovalRequest(
             Authentication authentication,
             @Valid @RequestBody ApprovalRequestDto dto) {
@@ -59,6 +65,7 @@ public class UserController {
     }
 
     @GetMapping("/me/approval-requests")
+    @Operation(summary = "Get my approval requests")
     public ResponseEntity<Page<Map<String, Object>>> getMyApprovalRequests(
             Authentication authentication,
             Pageable pageable) {
@@ -69,6 +76,7 @@ public class UserController {
     }
 
     @PatchMapping("/me/profile")
+    @Operation(summary = "Update own profile", description = "Update fullName and email")
     public ResponseEntity<UserDto> updateMyProfile(
             Authentication authentication,
             @RequestBody Map<String, String> body) {
@@ -84,6 +92,7 @@ public class UserController {
     }
 
     @GetMapping("/team-members")
+    @Operation(summary = "Get team members by team name")
     public ResponseEntity<Page<UserDto>> getTeamMembers(
             @RequestParam String team,
             Pageable pageable) {
@@ -93,6 +102,7 @@ public class UserController {
     }
 
     @GetMapping("/teams")
+    @Operation(summary = "Get current user's teams")
     public ResponseEntity<List<String>> getMyTeams(Authentication authentication) {
         log.info("GET /api/users/teams - user: {}", authentication.getName());
         UserDto currentUser = userService.getCurrentUser(authentication.getName());
@@ -102,6 +112,7 @@ public class UserController {
     }
 
     @GetMapping("/all-teams")
+    @Operation(summary = "Get all teams in the system")
     public ResponseEntity<List<String>> getAllTeams() {
         log.info("GET /api/users/all-teams");
         return ResponseEntity.ok(userService.getAllTeams());

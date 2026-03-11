@@ -9,8 +9,8 @@ import com.taskmanager.auth.entity.Role;
 import com.taskmanager.auth.entity.User;
 import com.taskmanager.auth.exception.AuthException;
 import com.taskmanager.auth.repository.UserRepository;
-import com.taskmanager.auth.security.JwtService;
-import com.taskmanager.auth.security.TokenService;
+import com.taskmanager.auth.security.IJwtService;
+import com.taskmanager.auth.security.ITokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -32,15 +32,15 @@ import java.util.Set;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthService implements IAuthService {
 
     // lock the account after too many failed attempts
     private static final int MAX_FAILED_ATTEMPTS = 5;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final TokenService tokenService;
+    private final IJwtService jwtService;
+    private final ITokenService tokenService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final KafkaTemplate<String, Object> kafkaTemplate;

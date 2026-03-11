@@ -19,46 +19,50 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TaskKafkaProducer {
+public class TaskKafkaProducer implements ITaskEventPublisher {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     // using task id as the kafka key so events for the same task go to the same partition
     public void sendTaskCreated(Task task) {
         TaskEvent event = buildTaskEvent(task, "CREATED");
-        kafkaTemplate.send(KafkaConfig.TASK_CREATED_TOPIC, task.getId().toString(), event);
-        log.info("Kafka event sent: TASK_CREATED for taskId={}", task.getId());
+        sendWithCallback(KafkaConfig.TASK_CREATED_TOPIC, task.getId().toString(), event);
     }
 
     public void sendTaskUpdated(Task task) {
         TaskEvent event = buildTaskEvent(task, "UPDATED");
-        kafkaTemplate.send(KafkaConfig.TASK_UPDATED_TOPIC, task.getId().toString(), event);
-        log.info("Kafka event sent: TASK_UPDATED for taskId={}", task.getId());
+        sendWithCallback(KafkaConfig.TASK_UPDATED_TOPIC, task.getId().toString(), event);
     }
 
     public void sendTaskDeleted(Task task) {
         TaskEvent event = buildTaskEvent(task, "DELETED");
-        kafkaTemplate.send(KafkaConfig.TASK_DELETED_TOPIC, task.getId().toString(), event);
-        log.info("Kafka event sent: TASK_DELETED for taskId={}", task.getId());
+        sendWithCallback(KafkaConfig.TASK_DELETED_TOPIC, task.getId().toString(), event);
     }
 
     public void sendTaskAssigned(Task task) {
         TaskEvent event = buildTaskEvent(task, "ASSIGNED");
-        kafkaTemplate.send(KafkaConfig.TASK_ASSIGNED_TOPIC, task.getId().toString(), event);
-        log.info("Kafka event sent: TASK_ASSIGNED for taskId={}", task.getId());
+        sendWithCallback(KafkaConfig.TASK_ASSIGNED_TOPIC, task.getId().toString(), event);
     }
 
     public void sendApprovalRequested(TaskApprovalRequest request) {
         TaskApprovalEvent event = buildApprovalEvent(request);
-        kafkaTemplate.send(KafkaConfig.TASK_APPROVAL_REQUESTED_TOPIC, request.getId().toString(), event);
-        log.info("Kafka event sent: APPROVAL_REQUESTED for requestId={}", request.getId());
+        sendWithCallback(KafkaConfig.TASK_APPROVAL_REQUESTED_TOPIC, request.getId().toString(), event);
     }
 
     public void sendApprovalReviewed(TaskApprovalRequest request) {
         TaskApprovalEvent event = buildApprovalEvent(request);
-        kafkaTemplate.send(KafkaConfig.TASK_APPROVAL_REVIEWED_TOPIC, request.getId().toString(), event);
-        log.info("Kafka event sent: APPROVAL_REVIEWED for requestId={}, status={}",
-                request.getId(), request.getStatus());
+        sendWithCallback(KafkaConfig.TASK_APPROVAL_REVIEWED_TOPIC, request.getId().toString(), event);
+    }
+
+    private void sendWithCallback(String topic, String key, Object event) {
+        kafkaTemplate.send(topic, key, event).whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("Failed to send Kafka event to topic={}, key={}: {}", topic, key, ex.getMessage(), ex);
+            } else {
+                log.info("Kafka event sent: topic={}, key={}, partition={}, offset={}",
+                        topic, key, result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+            }
+        });
     }
 
     // build a snapshot of the task state at this moment for the event

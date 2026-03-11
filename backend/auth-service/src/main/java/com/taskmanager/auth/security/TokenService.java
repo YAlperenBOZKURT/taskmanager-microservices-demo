@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TokenService {
+public class TokenService implements ITokenService {
 
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
     private static final String BLACKLIST_PREFIX = "blacklist:";

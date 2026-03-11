@@ -29,14 +29,14 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TaskService {
+public class TaskService implements ITaskService {
 
     private final TaskRepository taskRepository;
     private final AttachmentRepository attachmentRepository;
     private final TaskApprovalRequestRepository approvalRequestRepository;
     private final TaskProgressEntryRepository progressEntryRepository;
-    private final MinioService minioService;
-    private final TaskKafkaProducer kafkaProducer;
+    private final IFileStorageService minioService;
+    private final ITaskEventPublisher kafkaProducer;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     // ==================== ADMIN/SUPER_ADMIN: Direct Operations ====================

@@ -1,6 +1,3 @@
-/**
- * Catches exceptions globally and returns clean error responses instead of stack traces
- */
 package com.taskmanager.notification.exception;
 
 import lombok.extern.slf4j.Slf4j;
@@ -9,34 +6,33 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // catch known runtime errors (like "not found") and return 400
+    @ExceptionHandler(NotificationException.class)
+    public ResponseEntity<ErrorResponse> handleNotificationException(NotificationException ex) {
+        log.error("Notification error: {} (code: {})", ex.getMessage(), ex.getErrorCode().getCode());
+        return ResponseEntity.status(ex.getStatus())
+                .body(ErrorResponse.of(ex.getErrorCode(), ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
+    public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         log.error("Runtime error: {}", ex.getMessage());
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.builder()
+                        .timestamp(java.time.LocalDateTime.now().toString())
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                        .message(ex.getMessage())
+                        .build());
     }
 
-    // anything unexpected gets a 500 - don't leak internals to the client
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         log.error("Unexpected error occurred", ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
-    }
-
-    private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.of(ErrorCode.INTERNAL_ERROR));
     }
 }

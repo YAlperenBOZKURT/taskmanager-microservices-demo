@@ -27,7 +27,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ApprovalService {
+public class ApprovalService implements IApprovalService {
 
     private final ApprovalRequestRepository approvalRequestRepository;
     private final UserRepository userRepository;

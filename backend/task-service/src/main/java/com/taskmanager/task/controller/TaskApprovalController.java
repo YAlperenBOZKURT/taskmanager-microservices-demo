@@ -6,7 +6,9 @@ package com.taskmanager.task.controller;
 
 import com.taskmanager.task.dto.ApprovalReviewRequest;
 import com.taskmanager.task.dto.TaskApprovalRequestDto;
-import com.taskmanager.task.service.TaskApprovalService;
+import com.taskmanager.task.service.ITaskApprovalService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,12 +25,14 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/tasks/approvals")
 @RequiredArgsConstructor
+@Tag(name = "Task Approvals", description = "Task approval workflow - review and manage approval requests")
 public class TaskApprovalController {
 
-    private final TaskApprovalService approvalService;
+    private final ITaskApprovalService approvalService;
 
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "List pending approval requests (Admin only)")
     public ResponseEntity<Page<TaskApprovalRequestDto>> getPendingRequests(
             Authentication auth,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -38,6 +42,7 @@ public class TaskApprovalController {
 
     @GetMapping("/all")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "List all approval requests (Admin only)")
     public ResponseEntity<Page<TaskApprovalRequestDto>> getAllRequests(
             Authentication auth,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -46,6 +51,7 @@ public class TaskApprovalController {
     }
 
     @GetMapping("/my-requests")
+    @Operation(summary = "Get current user's approval requests")
     public ResponseEntity<Page<TaskApprovalRequestDto>> getMyRequests(
             Authentication auth,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -55,6 +61,7 @@ public class TaskApprovalController {
 
     @PostMapping("/{requestId}/review")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Review approval request", description = "Approve or reject a pending request (Admin only)")
     public ResponseEntity<TaskApprovalRequestDto> reviewRequest(
             @PathVariable UUID requestId,
             @Valid @RequestBody ApprovalReviewRequest review,

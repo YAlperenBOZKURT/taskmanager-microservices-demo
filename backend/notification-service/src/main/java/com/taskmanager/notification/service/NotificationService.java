@@ -19,10 +19,10 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificationService {
+public class NotificationService implements INotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final EmailService emailService;
+    private final IEmailService emailService;
 
     public Notification createAndSend(String recipientUserId,
                                        String recipientEmail,

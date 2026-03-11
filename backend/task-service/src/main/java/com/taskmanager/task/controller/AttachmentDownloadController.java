@@ -7,7 +7,9 @@ package com.taskmanager.task.controller;
 import com.taskmanager.task.entity.Attachment;
 import com.taskmanager.task.exception.TaskException;
 import com.taskmanager.task.repository.AttachmentRepository;
-import com.taskmanager.task.service.MinioService;
+import com.taskmanager.task.service.IFileStorageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
@@ -24,12 +26,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/tasks/attachments")
 @RequiredArgsConstructor
+@Tag(name = "Attachments", description = "File download operations for task attachments")
 public class AttachmentDownloadController {
 
     private final AttachmentRepository attachmentRepository;
-    private final MinioService minioService;
+    private final IFileStorageService minioService;
 
     @GetMapping("/{attachmentId}/download")
+    @Operation(summary = "Download attachment", description = "Streams file directly from MinIO storage")
     public ResponseEntity<InputStreamResource> downloadAttachment(@PathVariable UUID attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new TaskException("Attachment not found", HttpStatus.NOT_FOUND));

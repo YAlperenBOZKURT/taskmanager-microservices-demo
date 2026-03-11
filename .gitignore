@@ -33,3 +33,8 @@ logs/
 ### Node ###
 node_modules/
 dist/
+
+
+### My Notes ###
+REFACTOR_STEPS.md
+

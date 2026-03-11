@@ -19,7 +19,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MinioService {
+public class MinioService implements IFileStorageService {
 
     private final MinioClient minioClient;
 

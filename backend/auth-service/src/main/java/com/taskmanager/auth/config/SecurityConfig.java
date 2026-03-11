@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/auth/password-reset/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
                         // Admin-only endpoints
                         .requestMatchers("/api/auth/register").hasAnyRole("ADMIN", "SUPER_ADMIN")

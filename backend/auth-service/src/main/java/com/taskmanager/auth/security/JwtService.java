@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class JwtService {
+public class JwtService implements IJwtService {
 
     @Value("${jwt.secret}")
     private String secretKey;

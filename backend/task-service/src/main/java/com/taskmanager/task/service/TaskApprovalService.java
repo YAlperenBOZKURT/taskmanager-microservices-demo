@@ -26,12 +26,12 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TaskApprovalService {
+public class TaskApprovalService implements ITaskApprovalService {
 
     private final TaskApprovalRequestRepository approvalRequestRepository;
     private final TaskRepository taskRepository;
-    private final TaskService taskService;
-    private final TaskKafkaProducer kafkaProducer;
+    private final ITaskService taskService;
+    private final ITaskEventPublisher kafkaProducer;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     public Page<TaskApprovalRequestDto> getPendingRequests(Set<String> reviewerTeams,

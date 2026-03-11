@@ -1,13 +1,67 @@
-## Updates
+## Updates / Güncellemeler
 
 <details>
-<summary><strong>09.03.2026</strong></summary>
+<summary><strong>11.03.2026 — Backend Refactoring</strong></summary>
 
-The backend has been updated to work on a team-based structure.  
+<details>
+<summary>🇬🇧 English</summary>
+
+Projenin temel özellikleri bittikten sonra kodu baştan gözden geçirdim. Bazı eksiklikleri kendim fark ettim, bazılarını da yapay zeka desteğiyle tespit ettik. Toplamda 5 adımlık bir plan çıkardık ve hepsini tamamladık.
+
+**Issues I identified:**
+- Service classes were tightly coupled. Controllers depended directly on concrete implementations instead of interfaces, violating SOLID principles.
+- There was no API documentation. I was testing all endpoints through Postman, but there was no Swagger/OpenAPI integration for professional-level documentation.
+- Error responses were inconsistent. Plain strings were returned instead of a structured format, which would make frontend error handling unreliable.
+- There were no unit tests at all. Nothing to catch regressions.
+
+**Issues identified with AI assistance:**
+- Kafka consumers had no retry mechanism or Dead Letter Queue. A single failure meant lost messages with no recovery path.
+
+**What we did (5 steps):**
+1. **Service Interfaces**: Created 13 interfaces across all 3 services. Controllers and consumers now depend on abstractions, not implementations.
+2. **Standardized Error Handling**: ErrorCode enums + ErrorResponse DTOs in all services. Consistent, structured error responses across the entire API.
+3. **Swagger/OpenAPI**: Added `springdoc-openapi` to all services with JWT security scheme. All 8 controllers annotated with `@Tag`, `@Operation`, `@ApiResponse`. Now accessible via `/swagger-ui.html` on each service.
+4. **Kafka DLQ & Retry**: Added `DefaultErrorHandler` with `DeadLetterPublishingRecoverer` to notification-service (3 retries, exponential backoff). Added send callbacks with error logging to task-service producer.
+5. **Unit Tests**: 41 tests across 4 test classes (AuthServiceTest, UserServiceTest, TaskServiceTest, NotificationServiceTest) using JUnit 5 + Mockito.
+
+</details>
+
+<details>
+<summary>🇹🇷 Türkçe</summary>
+
+Projenin temel özellikleri bittikten sonra kodu baştan gözden geçirdim. Bazı eksiklikleri kendim fark ettim, bazılarını da yapay zeka desteğiyle tespit ettik. Toplamda 5 adımlık bir plan çıkardık ve hepsini tamamladık.
+
+**Benim tespit ettiğim eksiklikler:**
+- Servis sınıfları sıkı bağımlıydı. Controller'lar concrete implementasyonlara doğrudan bağımlıydı, interface kullanılmıyordu (SOLID prensiplerinin ihlali).
+- API dokümantasyonu yoktu. Tüm endpoint'leri Postman üzerinden test ediyordum ancak profesyonel seviyede bir Swagger/OpenAPI entegrasyonu bulunmuyordu.
+- Hata yanıtları tutarsızdı. Yapılandırılmış bir format yerine düz string döndürülüyordu. Bu durum frontend tarafında hata yönetimini güvenilmez hale getiriyordu.
+- Hiç unit test yoktu. Regression'ları yakalayacak bir mekanizma bulunmuyordu.
+
+**Yapay zekanın tespit ettiği eksiklikler:**
+- Kafka consumer'larda retry mekanizması veya Dead Letter Queue yoktu. Tek bir hata, mesajın kurtarılamadan kaybolması anlamına geliyordu.
+
+**Yapılanlar (5 adım):**
+1. **Service Interface'leri**: 3 serviste toplam 13 interface oluşturuldu. Controller ve consumer'lar artık soyutlamalara bağımlı, somut sınıflara değil.
+2. **Standart Hata Yönetimi**: Tüm servislerde ErrorCode enum + ErrorResponse DTO. API genelinde tutarlı, yapılandırılmış hata yanıtları.
+3. **Swagger/OpenAPI**: Tüm servislere `springdoc-openapi` eklendi, JWT security scheme tanımlandı. 8 controller'a `@Tag`, `@Operation`, `@ApiResponse` annotation'ları eklendi. Her serviste `/swagger-ui.html` üzerinden erişilebilir.
+4. **Kafka DLQ & Retry**: Notification service'e `DefaultErrorHandler` + `DeadLetterPublishingRecoverer` eklendi (3 retry, exponential backoff). Task service producer'a hata loglama callback'i eklendi.
+5. **Unit Test'ler**: JUnit 5 + Mockito ile 4 test sınıfında toplam 41 test (AuthServiceTest, UserServiceTest, TaskServiceTest, NotificationServiceTest).
+
+</details>
+
+</details>
+
+<details>
+<summary><strong>09.03.2026 — Team-based Structure & Docker Fixes</strong></summary>
+
+<details>
+<summary>🇬🇧 English</summary>
+
+The backend has been updated to work on a team-based structure.
 The integration of the changes into the frontend was carried out with AI assistance.
 
 Docker logging fix:
-- Added `x-logging` anchor in `docker-compose.yml` — each container is now limited to max 50MB of logs (5 files × 10MB).
+- Added `x-logging` anchor in `docker-compose.yml`. Each container is now limited to max 50MB of logs (5 files × 10MB).
 - Applied the logging limit to all 15 services.
 - Reduced Spring Boot log levels from DEBUG to INFO for production (docker profile).
 - Optimized `logback-spring.xml` files: root logs go only to Logstash in docker profile, reducing Docker JSON log growth.
@@ -24,18 +78,14 @@ Missing:
 
 </details>
 
----
-
-## Güncellemeler
-
 <details>
-<summary><strong>09.03.2026</strong></summary>
+<summary>🇹🇷 Türkçe</summary>
 
-Backend takım bazlı çalışacak şekilde güncellendi.  
+Backend takım bazlı çalışacak şekilde güncellendi.
 Yapılan değişikliklerin frontend tarafına entegrasyonu yapay zeka desteği ile gerçekleştirildi.
 
 Docker log düzeltmesi:
-- `docker-compose.yml`'e `x-logging` anchor eklendi — her konteyner maksimum 50MB log tutabilir (5 dosya × 10MB).
+- `docker-compose.yml`'e `x-logging` anchor eklendi. Her konteyner maksimum 50MB log tutabilir (5 dosya × 10MB).
 - 15 servisin tamamına log boyut limiti uygulandı.
 - Spring Boot log seviyeleri production (docker profili) için DEBUG'dan INFO'ya düşürüldü.
 - `logback-spring.xml` dosyaları optimize edildi: docker profilinde root loglar sadece Logstash'e gider, Docker JSON log büyümesi azaltıldı.
@@ -49,6 +99,8 @@ Eksikler:
 - UI tarafında bazı eksiklikler bulunuyor.
 - Frontend'te dashboard kartlarının bir kısmı tıklanabilir değil (ticket kartları, talep sonuçları vb.).
 - Task Service'te kullanıcı taleplerinde (requestCreateTask, requestUpdateTask, requestCompleteTask) takım erişim kontrolü backend tarafında yapılmıyor; frontend tarafında kontrol mevcut ancak backend'de eksik.
+
+</details>
 
 </details>
 

@@ -10,7 +10,9 @@ package com.taskmanager.notification.controller;
 import com.taskmanager.notification.document.TicketStatus;
 import com.taskmanager.notification.dto.CreateTicketRequest;
 import com.taskmanager.notification.dto.TicketDto;
-import com.taskmanager.notification.service.TicketService;
+import com.taskmanager.notification.service.ITicketService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,11 +25,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
+@Tag(name = "Tickets", description = "Support ticket creation, listing and status management")
 public class TicketController {
 
-    private final TicketService ticketService;
+    private final ITicketService ticketService;
 
     @PostMapping
+    @Operation(summary = "Create a support ticket")
     public ResponseEntity<TicketDto> createTicket(
             @RequestHeader("X-User-Id") String userId,
             @RequestHeader("X-Username") String username,
@@ -38,6 +42,7 @@ public class TicketController {
     }
 
     @GetMapping
+    @Operation(summary = "Get my tickets")
     public ResponseEntity<Page<TicketDto>> getMyTickets(
             @RequestHeader("X-User-Id") String userId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -45,6 +50,7 @@ public class TicketController {
     }
 
     @GetMapping("/received")
+    @Operation(summary = "Get received tickets")
     public ResponseEntity<Page<TicketDto>> getReceivedTickets(
             @RequestHeader("X-User-Id") String userId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -52,6 +58,7 @@ public class TicketController {
     }
 
     @GetMapping("/{ticketId}")
+    @Operation(summary = "Get ticket by ID")
     public ResponseEntity<TicketDto> getTicket(
             @PathVariable String ticketId,
             @RequestHeader("X-User-Id") String userId) {
@@ -59,6 +66,7 @@ public class TicketController {
     }
 
     @PatchMapping("/{ticketId}/approve")
+    @Operation(summary = "Approve ticket")
     public ResponseEntity<TicketDto> approveTicket(
             @PathVariable String ticketId,
             @RequestHeader("X-User-Id") String userId) {
@@ -66,6 +74,7 @@ public class TicketController {
     }
 
     @PatchMapping("/{ticketId}/reject")
+    @Operation(summary = "Reject ticket")
     public ResponseEntity<TicketDto> rejectTicket(
             @PathVariable String ticketId,
             @RequestHeader("X-User-Id") String userId) {

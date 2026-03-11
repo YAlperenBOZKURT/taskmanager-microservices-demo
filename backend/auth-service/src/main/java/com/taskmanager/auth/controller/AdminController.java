@@ -8,9 +8,11 @@ import com.taskmanager.auth.dto.RegisterRequest;
 import com.taskmanager.auth.dto.UserDto;
 import com.taskmanager.auth.entity.ApprovalRequest;
 import com.taskmanager.auth.entity.Role;
-import com.taskmanager.auth.service.ApprovalService;
-import com.taskmanager.auth.service.AuthService;
-import com.taskmanager.auth.service.UserService;
+import com.taskmanager.auth.service.IApprovalService;
+import com.taskmanager.auth.service.IAuthService;
+import com.taskmanager.auth.service.IUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +32,16 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@Tag(name = "Admin", description = "User management, role/team assignment and approval review (Admin/SuperAdmin)")
 public class AdminController {
 
-    private final UserService userService;
-    private final AuthService authService;
-    private final ApprovalService approvalService;
+    private final IUserService userService;
+    private final IAuthService authService;
+    private final IApprovalService approvalService;
 
     @PostMapping("/users")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Create a new user (SuperAdmin only)")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody RegisterRequest request) {
         log.info("POST /api/admin/users - creating user: {}", request.getUsername());
         UserDto user = authService.register(request);
@@ -45,6 +49,7 @@ public class AdminController {
     }
 
     @GetMapping("/users")
+    @Operation(summary = "List all users with pagination")
     public ResponseEntity<Page<UserDto>> getAllUsers(Pageable pageable) {
         log.info("GET /api/admin/users - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
         Page<UserDto> users = userService.getAllUsers(pageable);
@@ -52,6 +57,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/{userId}")
+    @Operation(summary = "Get user by ID")
     public ResponseEntity<UserDto> getUserById(@PathVariable UUID userId) {
         log.info("GET /api/admin/users/{}", userId);
         UserDto user = userService.getUserById(userId);
@@ -59,6 +65,7 @@ public class AdminController {
     }
 
     @PatchMapping("/users/{userId}/status")
+    @Operation(summary = "Enable/disable user account")
     public ResponseEntity<UserDto> toggleUserStatus(
             @PathVariable UUID userId,
             @RequestBody Map<String, Boolean> body) {
@@ -70,6 +77,7 @@ public class AdminController {
 
     @DeleteMapping("/users/{userId}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Delete user (SuperAdmin only)")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable UUID userId) {
         log.info("DELETE /api/admin/users/{}", userId);
         userService.deleteUser(userId);
@@ -78,6 +86,7 @@ public class AdminController {
 
     @PutMapping("/users/{userId}/roles")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Assign roles to user (SuperAdmin only)")
     public ResponseEntity<UserDto> assignRoles(
             @PathVariable UUID userId,
             @RequestBody Map<String, Set<Role>> body) {
@@ -89,6 +98,7 @@ public class AdminController {
 
     @PutMapping("/users/{userId}/teams")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Set user teams (SuperAdmin only)")
     public ResponseEntity<UserDto> setUserTeams(
             @PathVariable UUID userId,
             @RequestBody Map<String, Set<String>> body) {
@@ -100,6 +110,7 @@ public class AdminController {
 
     @PostMapping("/users/{userId}/teams/add")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Add user to team (SuperAdmin only)")
     public ResponseEntity<UserDto> addUserToTeam(
             @PathVariable UUID userId,
             @RequestBody Map<String, String> body) {
@@ -111,6 +122,7 @@ public class AdminController {
 
     @PostMapping("/users/{userId}/teams/remove")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Remove user from team (SuperAdmin only)")
     public ResponseEntity<UserDto> removeUserFromTeam(
             @PathVariable UUID userId,
             @RequestBody Map<String, String> body) {
@@ -121,6 +133,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/by-team")
+    @Operation(summary = "List users by team")
     public ResponseEntity<Page<UserDto>> getUsersByTeam(
             @RequestParam String team,
             Pageable pageable) {
@@ -130,6 +143,7 @@ public class AdminController {
     }
 
     @GetMapping("/teams")
+    @Operation(summary = "List all teams")
     public ResponseEntity<java.util.List<String>> getAllTeams() {
         log.info("GET /api/admin/teams");
         return ResponseEntity.ok(userService.getAllTeams());
@@ -137,6 +151,7 @@ public class AdminController {
 
     @PatchMapping("/users/{userId}/profile")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Update user profile (SuperAdmin only)")
     public ResponseEntity<UserDto> updateUserProfile(
             @PathVariable UUID userId,
             @RequestBody Map<String, String> body) {
@@ -150,6 +165,7 @@ public class AdminController {
     }
 
     @GetMapping("/approval-requests")
+    @Operation(summary = "List pending approval requests")
     public ResponseEntity<Page<Map<String, Object>>> getPendingApprovalRequests(Pageable pageable) {
         log.info("GET /api/admin/approval-requests - page: {}", pageable.getPageNumber());
         Page<Map<String, Object>> requests = approvalService.getPendingRequests(pageable)
@@ -158,6 +174,7 @@ public class AdminController {
     }
 
     @PostMapping("/approval-requests/{requestId}/review")
+    @Operation(summary = "Review an approval request", description = "Approve or reject a pending profile change request")
     public ResponseEntity<Map<String, Object>> reviewApprovalRequest(
             @PathVariable UUID requestId,
             Authentication authentication,

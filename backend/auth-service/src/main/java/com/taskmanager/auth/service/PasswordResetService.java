@@ -23,7 +23,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PasswordResetService {
+public class PasswordResetService implements IPasswordResetService {
 
     // token expires after 2 hours - should be enough time
     private static final int TOKEN_EXPIRY_HOURS = 2;

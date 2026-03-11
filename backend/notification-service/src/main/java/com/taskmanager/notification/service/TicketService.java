@@ -23,10 +23,10 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TicketService {
+public class TicketService implements ITicketService {
 
     private final TicketRepository ticketRepository;
-    private final NotificationService notificationService;
+    private final INotificationService notificationService;
 
     public TicketDto createTicket(String senderId, String senderUsername,
                                    String senderRole, CreateTicketRequest request) {
